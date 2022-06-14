@@ -1,0 +1,105 @@
+#!/bin/sh
+uci -q batch <<-EOF >/dev/null
+delete ucitrack.@sysmonitor[-1]
+add ucitrack sysmonitor
+set ucitrack.@sysmonitor[-1].init=sysmonitor
+commit ucitrack
+EOF
+
+[ -f /etc/vsftpd.conf ] && {
+cat > /etc/vsftpd.conf <<EOF
+background=YES
+listen=NO
+listen_ipv6=YES
+anonymous_enable=YES
+local_enable=YES
+write_enable=YES
+local_umask=022
+file_open_mode=0755
+check_shell=NO
+chown_uploads=YES
+chown_username=ftp
+ftp_username=ftp
+anonymous_enable=YES
+no_anon_password=YES
+anon_upload_enable=YES
+anon_world_readable_only=YES
+anon_mkdir_write_enable=YES
+anon_other_write_enable=YES
+anon_umask=022
+anon_root=/var/ftp
+local_root=/mnt
+EOF
+}
+[ -f /etc/lighttpd/conf.d/30-webdav.conf ] && {
+cat > /etc/lighttpd/conf.d/30-webdav.conf <<EOF
+server.modules += ( "mod_webdav" )
+
+webdav.activate = "enable"
+#webdav.is-readonly = "enable"
+webdav.sqlite-db-name = "/tmp/lighttpd-webdav.db"
+EOF
+
+file='/etc/lighttpd/lighttpd.conf'
+sed -i '/server.document-root/a\sqmshcn' $file
+sed -i '/server.document-root/d' $file
+sed -i  's|sqmshcn|server.document-root        = "/mnt"|' $file
+sed -i  's|"index.html"|"index.html", ".index.htm", ".index.html"|' $file
+sed -i  's|".php", ".pl", ".fcgi"|".php", ".pl", ".fcgi", ".lua"|' $file
+sed -i s/':80'/':8080'/ /etc/config/uhttpd
+}
+
+[ -f /etc/lighttpd/conf.d/30-cgi.conf ] && {
+sed -i '/".cgi" => "\/usr\/bin\/perl"/i\                               ".lua" => "\/usr\/bin\/lua",' /etc/lighttpd/conf.d/30-cgi.conf
+cat >> /etc/lighttpd/conf.d/30-cgi.conf <<EOF
+cgi.assign += ( "/cgi-bin/luci" => "",
+                "/cgi-bin/cgi-backup" => "",
+                "/cgi-bin/cgi-download" => "",
+                "/cgi-bin/cgi-exec" => "",
+                "/cgi-bin/cgi-upload" => "" )
+				
+server.username := ""
+server.groupname := ""
+EOF
+}
+
+cat > /mnt/.index.htm <<EOF
+<HTML>
+      <HEAD>
+      <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=gb2312" />
+      <META HTTP-EQUIV="refresh" CONTENT="0;url=http://192.168.1.8:8080/" />
+      </HEAD>
+</HTML>
+EOF
+
+file='/etc/samba/smb.conf.template'
+sed -i  's|#dns proxy = No|dns proxy = Yes|' $file
+sed -i  's|#local master = no|local master = Yes|' $file
+sed -i  's|#preferred master = yes|preferred master = yes|' $file
+sed -i  's|#smb ports = 445 139|smb ports = 445 139|' $file
+sed -i  's|#dns proxy = No|dns proxy = Yes|' $file
+
+cat >> $file << EOF
+	browseable = yes
+	wins support = yes
+	wins proxy =  yes
+	remote announce
+	remote browse sync
+EOF
+
+mkdir /home
+mkdir /home/ftp
+chmod 755 /home
+chmod 755 /home/ftp
+
+mkdir /var/ftp
+chmod /755 /var/ftp
+mkdir /var/ftp/upload
+chmod /777 /var/ftp/upload
+touch /var/ftp/welcome
+
+chmod 0755 /etc/init.d/sysmonitor /usr/share/sysmonitor/*.sh
+
+rm -rf /tmp/luci-modulecache /tmp/luci-indexcache
+
+exit 0

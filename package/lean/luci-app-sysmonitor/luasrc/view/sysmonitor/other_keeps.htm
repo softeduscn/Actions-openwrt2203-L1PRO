@@ -1,0 +1,10 @@
+<%+cbi/valueheader%>
+	<% if self:cfgvalue(section) ~= false then %>
+		<input class="cbi-checkbox " style="display: <%= display %>" type="checkbox"<%= attr("name", cbid) .. attr("id", cbid)%> "/>
+	<% else %>
+		-
+	<% end %>
+<%+cbi/valuefooter%>
+
+
+

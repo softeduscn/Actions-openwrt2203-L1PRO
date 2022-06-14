@@ -1,0 +1,20 @@
+{
+	"luci-app-sysmonitor": {
+		"description": "Grant access to LuCI app sysmonitor",
+		"read": {
+			"file": {
+				"/etc/config/sysmonitor": [ "read" ],
+				"/etc/config/network": [ "read" ],
+				"/etc/init.d/sysmonitor": [ "exec" ]
+			},
+			"uci": [ "sysmonitor", "sysmonitor" ]
+		},
+		"write": {
+			"file": {
+				"/etc/config/sysmonitor": [ "write" ]
+			},
+			"uci": [ "sysmonitor", "sysmonitor" ]
+
+		}
+	}
+}

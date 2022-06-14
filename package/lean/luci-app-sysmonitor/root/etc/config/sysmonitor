@@ -1,0 +1,7 @@
+
+config sysmonitor 'sysmonitor'
+	option enable '1'
+	option homeip '192.168.1.1'
+	option vpnip '192.168.1.110'
+	option share '1'
+

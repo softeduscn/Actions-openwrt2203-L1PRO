@@ -1,0 +1,212 @@
+#!/bin/sh
+
+uci set fstab.@global[0].anon_mount='1'
+uci commit fstab
+
+uci set system.@system[0].hostname='NAS'
+uci set system.@system[0].timezone=CST-8
+uci set system.@system[0].zonename=Asia/Shanghai
+uci commit system
+uci set network.globals.ula_prefix=''
+#uci set network.@device[0].mtu='1472'
+uci set network.@device[0].stp='1'
+uci set network.lan.ipaddr='192.168.1.8'
+uci set network.lan.netmask='255.255.255.0'
+uci set network.lan.gateway='192.168.1.1'
+uci del_list network.lan.dns='192.168.1.1'
+uci add_list network.lan.dns='192.168.1.1'
+uci set network.lan.ip6assign=''
+uci commit network
+
+cat /etc/config/network | grep lan6 > /dev/null
+if [ $? -ne 0 ];then
+cat >>/etc/config/network <<EOF
+config interface 'lan6'
+	option proto 'dhcpv6'
+	option device 'br-lan'
+	option reqaddress 'try'
+	option reqprefix 'auto'
+EOF
+fi
+
+uci del_list dhcp.lan.list ra_flags='none'
+uci add_list dhcp.lan.list ra_flags='none'
+uci set dhcp.lan.ra=''
+uci set dhcp.lan.dhcpv4=''
+uci set dhcp.lan.dhcpv6=''
+uci set dhcp.lan.ignore='1'
+uci commit dhcp
+
+cat /etc/config/dhcp | grep lan6 > /dev/null
+if [ $? -ne 0 ];then
+cat >> /etc/config/dhcp <<EOF
+config dhcp 'lan6'
+	option interface 'lan6'
+	option ignore '1'
+	list ra_flags 'none'
+EOF
+fi
+
+uci del_list firewall.@zone[0].network='lan6'
+uci add_list firewall.@zone[0].network='lan6'
+uci set firewall.@defaults[0].flow_offloading='1'
+uci set firewall.@defaults[0].flow_offloading_hw='1'
+uci set firewall.@zone[1].input='ACCEPT'
+uci commit firewall
+
+[ -f /etc/init.d/ddns ] && {
+/etc/init.d/ddns enable
+cat > /etc/config/ddns <<EOF
+config ddns 'global'
+	option ddns_dateformat '%F %R'
+	option ddns_loglines '250'
+	option ddns_rundir '/var/run/ddns'
+	option ddns_logdir '/var/log/ddns'
+	option upd_privateip '1'
+
+config service 'HomeCN'
+	option service_name 'changeip.com'
+	option use_ipv6 '0'
+	option enabled '1'
+	option ip_source 'web'
+	option use_syslog '2'
+	option check_unit 'minutes'
+	option force_unit 'minutes'
+	option retry_unit 'seconds'
+	option username 'sqmshcn@gmail.com'
+	option password 'sqmshcn110'
+	option force_dnstcp '1'
+	option ip_url 'http://members.3322.org/dyndns/getip'
+	option use_https '1'
+	option cacert '/etc/ssl/certs'
+	option lookup_host 'homecn.freeddns.com'
+	option domain 'homecn.freeddns.com'
+	option bind_network 'lan'
+	option interface 'br-lan'
+
+config service 'ECS'
+	option service_name 'changeip.com'
+	option use_ipv6 '0'
+	option enabled '1'
+	option username 'sqmshcn@gmail.com'
+	option password 'sqmshcn110'
+	option use_syslog '2'
+	option check_unit 'minutes'
+	option force_unit 'minutes'
+	option retry_unit 'seconds'
+	option ip_source 'web'
+	option ip_url 'http://47.100.183.141/ip.php'
+	option force_dnstcp '1'
+	option use_https '1'
+	option cacert '/etc/ssl/certs'
+	option lookup_host 'ecs.freeddns.com'
+	option domain 'ecs.freeddns.com'
+	option interface 'br-lan'
+	option bind_network 'lan'
+
+config service 'DynuECS'
+	option service_name 'dynu.com'
+	option use_ipv6 '0'
+	option lookup_host 'ecs.ddnsfree.com'
+	option domain 'ecs.ddnsfree.com'
+	option username 'sqmshcn@gmail.com'
+	option password 'sqmshcn110'
+	option use_syslog '2'
+	option check_unit 'minutes'
+	option force_unit 'minutes'
+	option retry_unit 'seconds'
+	option ip_source 'web'
+	option ip_url 'http://47.100.183.141/ip.php'
+	option force_dnstcp '1'
+	option use_https '1'
+	option cacert '/etc/ssl/certs'
+	option enabled '1'
+	option interface 'br-lan'
+	option bind_network 'lan'
+
+config service 'Dynu'
+	option service_name 'dynu.com'
+	option use_ipv6 '0'
+	option enabled '1'
+	option username 'sqmshcn@gmail.com'
+	option password 'sqmshcn110'
+	option use_syslog '2'
+	option check_unit 'minutes'
+	option force_unit 'minutes'
+	option retry_unit 'seconds'
+	option ip_source 'web'
+	option force_dnstcp '1'
+	option use_https '1'
+	option cacert '/etc/ssl/certs'
+	option ip_url 'http://members.3322.org/dyndns/getip'
+	option lookup_host 'homecn.ddnsfree.com'
+	option domain 'homecn.ddnsfree.com'
+	option interface 'br-lan'
+	option bind_network 'lan'
+
+config service 'Dynu6'
+	option service_name 'dynu.com'
+	option use_ipv6 '1'
+	option ip_source 'web'
+	option ip_url 'http://6.ipw.cn'
+	option use_syslog '2'
+	option check_unit 'minutes'
+	option force_unit 'minutes'
+	option retry_unit 'seconds'
+	option username 'sqmshcn@gmail.com'
+	option password 'sqmshcn110'
+	option enabled '1'
+	option force_dnstcp '1'
+	option use_https '1'
+	option cacert '/etc/ssl/certs'
+	option lookup_host 'homecn.ddnsfree.com'
+	option domain 'homecn.ddnsfree.com'
+	option interface 'br-lan'
+	option bind_network 'lan'
+
+config service 'Music'
+	option service_name 'dynu.com'
+	option use_ipv6 '0'
+	option enabled '1'
+	option lookup_host 'music111.ddnsfree.com'
+	option domain 'music111.ddnsfree.com'
+	option username 'sqmshcn@gmail.com'
+	option password 'sqmshcn110'
+	option use_syslog '2'
+	option check_unit 'minutes'
+	option force_unit 'minutes'
+	option retry_unit 'seconds'
+	option ip_source 'web'
+	option ip_url 'http://members.3322.org/dyndns/getip'
+	option interface 'br-lan'
+	option bind_network 'lan'
+	option force_dnstcp '1'
+	option use_https '1'
+	option cacert '/etc/ssl/certs'
+
+config service 'Music6'
+	option service_name 'dynu.com'
+	option use_ipv6 '1'
+	option enabled '1'
+	option lookup_host 'music111.ddnsfree.com'
+	option domain 'music111.ddnsfree.com'
+	option username 'sqmshcn@gmail.com'
+	option password 'sqmshcn110'
+	option use_syslog '2'
+	option check_unit 'minutes'
+	option force_unit 'minutes'
+	option retry_unit 'seconds'
+	option ip_source 'web'
+	option ip_url 'http://192.168.1.8:8080/ip6.html'
+	option interface 'br-lan'
+	option bind_network 'lan'
+	option force_dnstcp '1'
+	option use_https '1'
+	option cacert '/etc/ssl/certs'
+EOF
+}
+
+sed -i 's/root:::0:99999:7:::/root:$1$zi2Q3mx.$FKnJLxOCjUxEX22lf3sXx0:19049:0:99999:7:::/g' /etc/shadow
+
+
+exit 0

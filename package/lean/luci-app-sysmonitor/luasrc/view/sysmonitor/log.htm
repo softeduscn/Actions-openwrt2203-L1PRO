@@ -1,0 +1,28 @@
+<script type="text/javascript">
+	//<![CDATA[
+	XHR.poll(5, '<%=url([[admin]], [[sys]], [[sysmonitor]], [[get_log]])%>', null,
+		function(x, data) {
+			if(x && x.status == 200) {
+				var user_textarea = document.getElementById('user_textarea');
+				user_textarea.innerHTML = x.responseText;
+			}
+		}
+	);
+	//]]>
+	function clearlog() {
+		XHR.get('<%=url([[admin]], [[sys]], [[sysmonitor]], [[clear_log]])%>', null,
+			function(x, data) {
+				if(x && x.status == 200) {
+					var user_textarea = document.getElementById('user_textarea');
+					user_textarea.innerHTML = "";
+					user_textarea.scrollTop = log_textarea.scrollHeight;
+				}
+			}
+		);
+	}
+</script>
+
+<fieldset class="cbi-section" id="_user_fieldset">
+	<input class="cbi-button cbi-input-apply" type="button" onclick="clearlog()" name="clean log" value="Clear logs" />
+	<textarea id="user_textarea" class="cbi-input-textarea" style="width: 100%;margin-top: 10px;" data-update="change" rows="25" wrap="off" readonly="readonly"></textarea>
+</fieldset>

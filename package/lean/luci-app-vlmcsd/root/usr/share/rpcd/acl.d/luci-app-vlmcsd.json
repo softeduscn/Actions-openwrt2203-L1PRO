@@ -1,0 +1,17 @@
+{
+	"luci-app-vlmcsd": {
+		"description": "Grant access to LuCI app vlmcsd",
+		"read": {
+			"file": {
+				"/etc/config/vlmcsd": [ "read" ],
+			},
+			"uci": [ "vlmcsd" ]
+		},
+		"write": {
+			"file": {
+				"/etc/config/vlmcsd": [ "write" ],
+			},
+			"uci": [ "vlmcsd" ]
+		}
+	}
+}
