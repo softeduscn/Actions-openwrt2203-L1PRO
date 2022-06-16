@@ -10,7 +10,6 @@ function index()
 	entry({"admin", "sys"}, firstchild(), "SYS", 10).dependent = false
    	entry({"admin", "sys","sysmonitor"}, alias("admin", "sys","sysmonitor", "settings"),_("SYSMonitor"), 20).dependent = true
 	entry({"admin", "sys", "sysmonitor","settings"}, cbi("sysmonitor/setup"), _("General Settings"), 30).dependent = true
-	entry({"admin", "sys", "sysmonitor", "update"}, form("sysmonitor/filetransfer"),_("Update"), 40).leaf = true
 	entry({"admin", "sys", "sysmonitor", "log"},cbi("sysmonitor/log"),_("Log"), 60).leaf = true
 
 	entry({"admin", "sys", "sysmonitor", "ip_status"}, call("action_ip_status")).leaf = true

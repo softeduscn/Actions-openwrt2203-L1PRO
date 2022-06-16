@@ -10,92 +10,57 @@ msgstr ""
 "Language: zh_CN\n"
 "X-Generator: Poedit 2.3.1\n"
 
-msgid "Choose local file:"
-msgstr "选择本地文件："
-
-msgid "Couldn't open file:"
-msgstr "无法打开文件："
-
-msgid "Create upload file error."
-msgstr "创建上传文件失败。"
-
-msgid "Download"
-msgstr "下载"
-
-msgid "Download file"
-msgstr "下载文件"
-
-msgid "File name"
-msgstr "文件名"
-
-msgid "File saved to"
-msgstr "文件保存到"
-
-msgid "FileTransfer"
-msgstr "文件传输"
-
-msgid "Install"
-msgstr "安装"
-
-msgid "Attributes"
-msgstr "属性"
-
-msgid "Modify time"
-msgstr "修改时间"
-
-msgid "No specify upload file."
-msgstr "未指定上传文件。"
-
-msgid "Path on Route:"
-msgstr "路由根目录："
 
 msgid "Log"
 msgstr "日志"
 
-msgid "Remove"
-msgstr "移除"
-
-msgid "Size"
-msgstr "大小"
-
-msgid "Upload"
-msgstr "上传"
-
-msgid "Update"
-msgstr "更新"
-
-msgid "Keeps"
-msgstr "保留配置"
-
-msgid "Upload file list"
-msgstr "上传文件列表"
-
-msgid "Upload file to '/tmp/upload/'"
-msgstr "将文件上传到'/tmp/upload/'"
-
 msgid "System Settings"
 msgstr "系统配置"
 
-msgid "WGusers"
-msgstr "用户"
+msgid "Enable samba"
+msgstr "启用samba"
 
-msgid "WireGuard Enable"
-msgstr "WireGuard 启用"
+msgid "Enable nfs"
+msgstr "启用nfs"
 
-msgid "Public Address"
-msgstr "公网地址"
+msgid "Enable ftp"
+msgstr "启用ftp"
+
+msgid "Enable webdav"
+msgstr "启用webdav"
+
+msgid "Samba rw"
+msgstr "samba读写"
+
+msgid "Samba RW directory"
+msgstr "Samba读写目录"
+
+msgid "Samba RW directory with comma separated"
+msgstr "Samba读写目录用逗号分隔"
+
+msgid "NFS rw"
+msgstr "NFS读写"
+
+msgid "NFS RW directory"
+msgstr "NFS读写目录"
+
+msgid "read & write"
+msgstr "读写"
+
+msgid "read only"
+msgstr "只读"
+
+msgid "NFS RW directory with comma separated"
+msgstr "NFS读写目录用逗号分隔"
 
 msgid "Gateway Address"
 msgstr "网关地址"
 
-msgid "Home IP Address"
-msgstr "网络出口地址"
-
 msgid "VPN IP Address"
 msgstr "VPN 地址"
 
-msgid "IP for Home(192.168.1.1)"
-msgstr "光猫出口地址(如：192.168.1.1)"
+msgid "IP for gateway(192.168.1.1)"
+msgstr "网关地址(如：192.168.1.1)"
 
 msgid "IP for VPN Server(192.168.1.110)"
 msgstr "VPN服务器地址(如：192.168.1.110)"
@@ -103,32 +68,4 @@ msgstr "VPN服务器地址(如：192.168.1.110)"
 msgid "BBR Enable"
 msgstr "BBR 启用"
 
-msgid "SmartDNS-AD Enable"
-msgstr "SmartDNS-AD 启用"
 
-msgid "VPN Enable"
-msgstr "VPN 启用"
-
-msgid "IPSEC Enable"
-msgstr "IPSEC 启用"
-
-msgid "PPTP Enable"
-msgstr "PPTP 启用"
-
-msgid "Keep config"
-msgstr "保留配置"
-
-msgid "Firmware"
-msgstr "固件"
-
-msgid "Firmware Address"
-msgstr "固件地址"
-
-msgid "View Firmware"
-msgstr "查看固件"
-
-msgid "Download Firmware"
-msgstr "下载固件"
-
-msgid "Download & Upgrade"
-msgstr "下载与升级"

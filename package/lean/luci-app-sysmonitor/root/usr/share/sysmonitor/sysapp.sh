@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 NAME=sysmonitor
 APP_PATH=/usr/share/$NAME
@@ -72,7 +72,7 @@ unftp() {
 	name=$(ls -F /var/ftp|grep '/$'|sed '/upload/d')
 	for n in $name
 	do
-		umount $n
+		umount /var/ftp/$n
 		rmdir /var/ftp/$n 
 	done
 }
@@ -87,6 +87,8 @@ cat > /mnt/.index.htm <<EOF
       </HEAD>
 </HTML>
 EOF
+	cp /mnt/.index.htm /var/webdav
+
 	echo $ip > /www/ip.html
 	ipv6=$(ip -o -6 addr list br-lan | cut -d ' ' -f7 | cut -d'/' -f1 |head -n1)
 	echo $ipv6 > /www/ip6.html
@@ -97,30 +99,48 @@ EOF
 	echolog "Update ip6: "$ipv6
 }
 
+check_dir() {
+	str=$(uci_get_by_name $NAME sysmonitor $1 0)
+	OLD_IFS="$IFS"
+	IFS=","
+	arr=($str)
+	IFS="$OLD_IFS"
+	for s in ${arr[@]}
+	do
+	[ $s == $2 ] && {
+		echo $2
+		exit
+	}
+	done
+	echo ""
+}
+
 samba() {
 	syspath='/mnt'
+	unftp
+if [ $(uci_get_by_name $NAME sysmonitor nfs 0) == 0 ]; then
+cat > /etc/config/nfs <<EOF
+config share
+	option clients '*'
+	option options 'ro,sync,root_squash,all_squash,insecure,no_subtree_check'
+	option enabled '1'
+	option path '/var/nfs'
+
+EOF
+else
+	echo "" >/etc/config/nfs
+fi
+	sed -i '/sambashare/,$d' /etc/config/samba4
+
 	syssd=$(ls -F $syspath|grep '/$'| grep 'sd[a-z][1-9]')
 	[ "$syssd" == "" ] && {
 		status=$(cat /var/log/sysmonitor.log|sed '/^[  ]*$/d'|sed -n '$p'|grep "No usb devices finded! please insert")
 		[ ! -n "$status"  ] &&  echolog "No usb devices finded! please insert ..."
-		unftp
 		/etc/init.d/nfs restart
 		/etc/init.d/samba4 restart
 		exit
 	}
-#	syspath=$syspath/$syssd
-#	name=$(ls $syspath |sed '/System Volume/d')
-#	[ "$name" == "" ] && {
-#		status=$(cat /var/log/sysmonitor.log|sed '/^[  ]*$/d'|sed -n '$p'|grep "No samba/nfs share directory")
-#		[ ! -n "$status"  ] &&  echolog "No samba/nfs/vsftpd share directory..."
-#		unftp
-#		/etc/init.d/nfs restart
-#		/etc/init.d/samba4 restart
-#		exit
-#	}
-unftp
-echo "" > /etc/config/nfs
-sed -i '/sambashare/,$d' /etc/config/samba4
+
 for m in $syssd
 do
 
@@ -128,11 +148,20 @@ name=$(ls $syspath/$m |sed '/lost+found/d')
 for n in $name
 do
 if [ -d "$syspath/$m$n" ]; then
+	[ $(uci_get_by_name $NAME sysmonitor samba 0) == 1 ] && {
+	right=$(uci_get_by_name $NAME sysmonitor samba_rw 0)
+	if [ $right == 0 ]; then
+		right='yes'
+		status=$(check_dir samba_rw_dir $n)
+		[ -n "$status" ] && right='no'
+	else
+		right='no'
+	fi
 cat >> /etc/config/samba4 <<EOF
 config sambashare
 	option name '$n'
 	option path '$syspath/$m$n'
-	option read_only 'no'
+	option read_only '$right'
 	option guest_ok 'yes'
 	option dir_mask '0777'
 	option create_mask '0777'
@@ -141,25 +170,43 @@ config sambashare
 
 EOF
 	echolog "Samba4 name: ["$n"]        path:["$syspath/$m$n"]"
+	}
+
+	[ $(uci_get_by_name $NAME sysmonitor nfs 0) == 1 ] && {
+	right=$(uci_get_by_name $NAME sysmonitor nfs_rw 0)
+	if [ $right == 0 ]; then
+		right='ro'
+		status=$(check_dir nfs_rw_dir $n)
+		[ -n "$status" ] && right='rw'
+	else
+		right='rw'
+	fi
 cat >> /etc/config/nfs <<EOF
 config share
 	option clients '*'
-	option options 'rw,sync,root_squash,all_squash,insecure,no_subtree_check'
+	option options '$right,sync,root_squash,all_squash,insecure,no_subtree_check'
 	option enabled '1'
 	option path '$syspath/$m$n'
 
 EOF
 	echolog "NFS path: ["$syspath/$m$n"]"
+	}
 fi
 done
-	[ ! -d /var/ftp/$m ] && {
-	mkdir /var/ftp/$m
-	mount --bind $syspath/$m /var/ftp/$m
-	}
-	echolog "Vsftpd path: ["$syspath/$m"]"
+	if [ $(uci_get_by_name $NAME sysmonitor ftp 0) == 1 ]; then
+		mkdir /var/ftp/$m
+		mount --bind $syspath/$m /var/ftp/$m
+		echolog "Vsftpd share path: ["$syspath/$m"]"
+	fi
 done
-	#[ ! -d "/var/ftp/upload" ] && mkdir /var/ftp/upload
-	#chmod 777 /var/ftp/upload
+	if [ $(uci_get_by_name $NAME sysmonitor webdav 0) == 0 ]; then
+		syspath="/var/webdav"
+	else
+		syspath="/mnt"
+	fi
+	sed -i "s|server.document-root.*$|server.document-root        = \"$syspath\"|" /etc/lighttpd/lighttpd.conf
+	echolog "webdav path: "$syspath
+	/etc/init.d/lighttpd restart &
 	/etc/init.d/samba4 restart &
 	/etc/init.d/vsftpd restart &
 	/etc/init.d/nfs restart &
@@ -185,4 +232,16 @@ getip6)
 getgateway)
 	getgateway
 	;;
+check_dir)
+	check_dir $1 $2
+	;;
+test)
+	n='app1'
+	right='ro'
+	status=$(check_dir samba_rw_dir $n)
+	[ -n "$status" ] && right='rw'
+	echo $status
+	echo $right
+	;;
 esac
+

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 if [ "$(ps -w | grep -v grep | grep sysmonitor.sh | wc -l)" -gt 2 ]; then
 	exit 1
@@ -64,21 +64,21 @@ while [ "1" == "1" ]; do #死循环
 		ipold=$ipv6
 		/usr/share/sysmonitor/sysapp.sh lighttpd
 	}
-	homeip=$(uci_get_by_name $NAME sysmonitor homeip 0)
+	gatewayip=$(uci_get_by_name $NAME sysmonitor gateway 0)
 	vpnip=$(uci_get_by_name $NAME sysmonitor vpnip 0)
 	gateway=$(check_ip $(route |grep default|sed 's/default[[:space:]]*//'|sed 's/[[:space:]].*$//'))
 	status=$(ping_url $vpnip)
 	if [ "$status" == 0 ]; then
 		if [ $gateway == $vpnip ]; then
 			d=$(date "+%Y-%m-%d %H:%M:%S")
-			echo $d": gateway="$homeip >> /var/log/sysmonitor.log
-			uci set network.lan.gateway=$homeip
+			echo $d": gateway="$gatewayip >> /var/log/sysmonitor.log
+			uci set network.lan.gateway=$gatewayip
 			uci commit network
 			ifup lan
 			/etc/init.d/odhcpd restart
 		fi
 	else
-		if [ $gateway == $homeip ]; then
+		if [ $gateway == $gatewayip ]; then
 			d=$(date "+%Y-%m-%d %H:%M:%S")
 			echo $d": gateway="$vpnip >> /var/log/sysmonitor.log
 			uci set network.lan.gateway=$vpnip

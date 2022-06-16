@@ -92,6 +92,10 @@ mkdir /home/ftp
 chmod 755 /home
 chmod 755 /home/ftp
 
+mkdir /var/nfs
+chmod /755 /var/nfs
+mkdir /var/webdav
+chmod /755 /var/webdav
 mkdir /var/ftp
 chmod /755 /var/ftp
 mkdir /var/ftp/upload
