@@ -99,18 +99,36 @@ EOF
 	echolog "Update ip6: "$ipv6
 }
 
-check_dir() {
-	str=$(uci_get_by_name $NAME sysmonitor $1 0)
-	OLD_IFS="$IFS"
-	IFS=","
-	arr=($str)
-	IFS="$OLD_IFS"
-	for s in ${arr[@]}
+minidlna_chk() {
+	str=$(uci_get_by_name $NAME sysmonitor minidlna 0)','
+	str=$(echo $str|sed 's/,,/,/g')
+	num=$(echo $str|awk -F"," '{print NF-1}')
+	a=1
+	while [ $a -le $num ]
 	do
-	[ $s == $2 ] && {
-		echo $2
-		exit
-	}
+ 	  	dir=$(echo $str|cut -d',' -f $a)
+		[ $dir == $1 ] && {
+			echo $1
+			exit
+		}
+   		a=`expr $a + 1`
+	done
+	echo ""
+}
+
+check_dir() {
+	str=$(uci_get_by_name $NAME sysmonitor $1 0)','
+	str=$(echo $str|sed 's/,,/,/g')
+	num=$(echo $str|awk -F"," '{print NF-1}')
+	a=1
+	while [ $a -le $num ]
+	do
+ 	  	dir=$(echo $str|cut -d',' -f $a)
+		[ $dir == $2 ] && {
+			echo $2
+			exit
+		}
+   		a=`expr $a + 1`
 	done
 	echo ""
 }
@@ -140,6 +158,7 @@ fi
 		/etc/init.d/samba4 restart
 		exit
 	}
+sed -i '/media_dir/d' /etc/config/minidlna
 
 for m in $syssd
 do
@@ -191,6 +210,10 @@ config share
 EOF
 	echolog "NFS path: ["$syspath/$m$n"]"
 	}
+	status=$(minidlna_chk $n)
+	[ -n "$status" ] && {
+		uci add_list minidlna.config.media_dir="$syspath/$m$n"
+	}
 fi
 done
 	if [ $(uci_get_by_name $NAME sysmonitor ftp 0) == 1 ]; then
@@ -199,6 +222,7 @@ done
 		echolog "Vsftpd share path: ["$syspath/$m"]"
 	fi
 done
+	uci commit minidlna
 	if [ $(uci_get_by_name $NAME sysmonitor webdav 0) == 0 ]; then
 		syspath="/var/webdav"
 	else
@@ -210,6 +234,7 @@ done
 	/etc/init.d/samba4 restart &
 	/etc/init.d/vsftpd restart &
 	/etc/init.d/nfs restart &
+	/etc/init.d/minidlna restart
 }
 
 
@@ -235,13 +260,6 @@ getgateway)
 check_dir)
 	check_dir $1 $2
 	;;
-test)
-	n='app1'
-	right='ro'
-	status=$(check_dir samba_rw_dir $n)
-	[ -n "$status" ] && right='rw'
-	echo $status
-	echo $right
-	;;
 esac
+
 

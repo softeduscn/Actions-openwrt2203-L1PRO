@@ -54,6 +54,12 @@ uci set firewall.@defaults[0].flow_offloading_hw='1'
 uci set firewall.@zone[1].input='ACCEPT'
 uci commit firewall
 
+sed -i '/media_dir/d' /etc/config/minidlna
+uci set minidlna.config.enabled='1'
+uci set minidlna.config.friendly_name='NAS DLNA Server'
+uci add_list minidlna.config.media_dir="/mnt/sda1/music"
+uci commit minidlna
+
 [ -f /etc/init.d/ddns ] && {
 /etc/init.d/ddns enable
 cat > /etc/config/ddns <<EOF
@@ -205,6 +211,111 @@ config service 'Music6'
 	option cacert '/etc/ssl/certs'
 EOF
 }
+
+[ -f /etc/vsftpd.conf ] && {
+cat > /etc/vsftpd.conf <<EOF
+background=YES
+listen=NO
+listen_ipv6=YES
+anonymous_enable=YES
+local_enable=YES
+write_enable=YES
+local_umask=022
+file_open_mode=0755
+check_shell=NO
+chown_uploads=YES
+chown_username=ftp
+ftp_username=ftp
+anonymous_enable=YES
+no_anon_password=YES
+anon_upload_enable=YES
+anon_world_readable_only=YES
+anon_mkdir_write_enable=YES
+anon_other_write_enable=YES
+anon_umask=022
+anon_root=/var/ftp
+local_root=/mnt
+EOF
+}
+
+[ -f /etc/lighttpd/conf.d/30-webdav.conf ] && {
+cat > /etc/lighttpd/conf.d/30-webdav.conf <<EOF
+server.modules += ( "mod_webdav" )
+
+webdav.activate = "enable"
+#webdav.is-readonly = "enable"
+webdav.sqlite-db-name = "/tmp/lighttpd-webdav.db"
+EOF
+
+file='/etc/lighttpd/lighttpd.conf'
+sed -i '/server.document-root/a\sqmshcn' $file
+sed -i '/server.document-root/d' $file
+sed -i  's|sqmshcn|server.document-root        = "/mnt"|' $file
+sed -i  's|"index.html"|"index.html", ".index.htm", ".index.html"|' $file
+sed -i  's|".php", ".pl", ".fcgi"|".php", ".pl", ".fcgi", ".lua"|' $file
+sed -i s/':80'/':8080'/ /etc/config/uhttpd
+}
+
+[ -f /etc/lighttpd/conf.d/30-cgi.conf ] && {
+sed -i '/".cgi" => "\/usr\/bin\/perl"/i\                               ".lua" => "\/usr\/bin\/lua",' /etc/lighttpd/conf.d/30-cgi.conf
+cat >> /etc/lighttpd/conf.d/30-cgi.conf <<EOF
+cgi.assign += ( "/cgi-bin/luci" => "",
+                "/cgi-bin/cgi-backup" => "",
+                "/cgi-bin/cgi-download" => "",
+                "/cgi-bin/cgi-exec" => "",
+                "/cgi-bin/cgi-upload" => "" )
+				
+server.username := ""
+server.groupname := ""
+EOF
+}
+
+cat > /mnt/.index.htm <<EOF
+<HTML>
+      <HEAD>
+      <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=gb2312" />
+      <META HTTP-EQUIV="refresh" CONTENT="0;url=http://192.168.1.8:8080/" />
+      </HEAD>
+</HTML>
+EOF
+
+file='/etc/samba/smb.conf.template'
+sed -i  's|#dns proxy = No|dns proxy = Yes|' $file
+sed -i  's|#local master = no|local master = Yes|' $file
+sed -i  's|#preferred master = yes|preferred master = yes|' $file
+sed -i  's|#smb ports = 445 139|smb ports = 445 139|' $file
+sed -i  's|#dns proxy = No|dns proxy = Yes|' $file
+cat >> $file << EOF
+	browseable = yes
+	wins support = yes
+	wins proxy =  yes
+	remote announce
+	remote browse sync
+	max protocol = SMB3
+	min protocol = NT1
+EOF
+
+cat >> /etc/config/ttyd << EOF
+config ttyd
+	option command '/bin/login'
+	option debug '7'
+	option ipv6 '1'
+EOF
+
+mkdir /home
+mkdir /home/ftp
+chmod 755 /home
+chmod 755 /home/ftp
+
+mkdir /var/nfs
+chmod /755 /var/nfs
+mkdir /var/webdav
+chmod /755 /var/webdav
+mkdir /var/ftp
+chmod /755 /var/ftp
+mkdir /var/ftp/upload
+chmod /777 /var/ftp/upload
+touch /var/ftp/welcome
 
 sed -i 's/root:::0:99999:7:::/root:$1$zi2Q3mx.$FKnJLxOCjUxEX22lf3sXx0:19049:0:99999:7:::/g' /etc/shadow
 

@@ -1,0 +1,15 @@
+
+config sysmonitor 'sysmonitor'
+	option enable '1'
+	option gateway '192.168.1.1'
+	option vpnip '192.168.1.110'
+	option samba '1'
+	option samba_rw '0'
+	option samba_rw_dir 'app'
+	option nfs '1'
+	option nfs_rw '0'
+	option nfs_rw_dir 'app'
+	option ftp '1'
+	option webdav '1'
+	option minidlna 'music'
+

@@ -53,6 +53,9 @@ msgstr "只读"
 msgid "NFS RW directory with comma separated"
 msgstr "NFS读写目录用逗号分隔"
 
+msgid "minidlna directory"
+msgstr "minidlna媒体目录"
+
 msgid "Gateway Address"
 msgstr "网关地址"
 

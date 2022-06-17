@@ -38,6 +38,9 @@ o = s:option(Value, "nfs_rw_dir", translate("NFS RW directory"))
 --o:depends("nfs_rw", "0")
 o.rmempty=false
 
+o = s:option(Value, "minidlna", translate("minidlna directory"))
+o.rmempty=false
+
 o = s:option(Value, "gateway", translate("Gateway Address"))
 --o.description = translate("IP for gateway(192.168.1.1)")
 o.datatype = "or(host)"

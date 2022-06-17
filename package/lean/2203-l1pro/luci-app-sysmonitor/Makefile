@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 LUCI_TITLE:=LuCI support for luci-app-sysmonitor
-LUCI_DEPENDS:=+ttyd +luci-lib-fs
+LUCI_DEPENDS:=+luci-lib-fs
 LUCI_PKGARCH:=all
 PKG_VERSION:=1.0
 PKG_RELEASE:=1

@@ -17,12 +17,12 @@ stop()
 }
 start()
 {
-	[ "$(ps | grep -v grep | grep ttyd | wc -l)" == 0 ] && /usr/bin/ttyd /bin/login &
 	if [ -f "/etc/init.d/ddns" ]; then
 		[ $(ps -w|grep ddns|grep -v grep|wc -l) == 0 ] && /etc/init.d/ddns restart &
 	fi
 	set sysmonitor.sysmonitor.enable=1
 	set commit sysmonitor
+	$APP_PATH/sysapp.sh minidlna
 	$APP_PATH/sysapp.sh lighttpd
 	$APP_PATH/sysapp.sh samba
 	$APP_PATH/sysmonitor.sh &
