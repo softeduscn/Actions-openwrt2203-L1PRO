@@ -7,6 +7,7 @@ fi
 sleep_unit=1
 NAME=sysmonitor
 APP_PATH=/usr/share/$NAME
+/etc/init.d/nfs disable
 
 uci_get_by_name() {
 	local ret=$(uci get $1.$2.$3 2>/dev/null)

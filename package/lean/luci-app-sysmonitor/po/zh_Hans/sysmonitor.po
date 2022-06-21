@@ -26,8 +26,8 @@ msgstr "启用nfs"
 msgid "Enable ftp"
 msgstr "启用ftp"
 
-msgid "Enable webdav"
-msgstr "启用webdav"
+msgid "Enable minidlna"
+msgstr "启用minidlna"
 
 msgid "Samba rw"
 msgstr "samba读写"

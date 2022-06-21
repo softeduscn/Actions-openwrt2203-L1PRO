@@ -12,9 +12,6 @@ s.anonymous = true
 o=s:option(Flag,"enable", translate("Enable"))
 o.rmempty=false
 
-o=s:option(Flag,"webdav", translate("Enable webdav"))
-o.rmempty=false
-
 o=s:option(Flag,"ftp", translate("Enable ftp"))
 o.rmempty=false
 
@@ -38,7 +35,10 @@ o = s:option(Value, "nfs_rw_dir", translate("NFS RW directory"))
 --o:depends("nfs_rw", "0")
 o.rmempty=false
 
-o = s:option(Value, "minidlna", translate("minidlna directory"))
+o=s:option(Flag,"minidlna", translate("Enable minidlna"))
+o.rmempty=false
+
+o = s:option(Value, "minidlna_dir", translate("minidlna directory"))
 o.rmempty=false
 
 o = s:option(Value, "gateway", translate("Gateway Address"))

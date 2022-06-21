@@ -3,12 +3,17 @@
 	<table width="100%" cellspacing="10" id="_xlnetacc_ip_status_table">
 		<tr><td width="20%" title="lan ip address ..." id="_ip_title"></td><td title="" id="_ip_state"><em></em></td></tr>
 	</table>
+	<table width="100%" cellspacing="10" id="_xlnetacc_minidlna_status_table">
+		<tr><td width="20%" title="Minidlna Status..." id="_minidlna_title"><font color=green></font></td><td title="" id="_minidlna_state"><em></em></td></tr>
+	</table>	
 </fieldset>
 
 <script type="text/javascript">//<![CDATA[
 	var ip_state = document.getElementById('_ip_state');
+	var minidlna_state = document.getElementById('_minidlna_state');
 
 	var ip_title = document.getElementById('_ip_title');
+	var minidlna_title = document.getElementById('_minidlna_title');
 
 	XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "sys", "sysmonitor", "ip_status")%>', null, function(x, status) {
 		if ( x && x.status == 200 ) {
@@ -18,6 +23,12 @@
 		}
 			ip_title.innerHTML ='<em><b><font color=6699cc>LAN IP</font></b></em>';
 			ip_state.innerHTML ='<em><b><font color=6699cc>'+status.ip_state+'</font></b></em>';
+		}
+	});
+	XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "sys", "sysmonitor", "minidlna_status")%>', null, function(x, status) {
+		if ( x && x.status == 200 ) {
+			minidlna_title.innerHTML ='<em><b><font color=6699cc>minidlna</font></b></em>';
+			minidlna_state.innerHTML ='<em><b><font color=6699cc>'+status.minidlna_state+'</font></b></em>';
 		}
 	});
 //]]></script>

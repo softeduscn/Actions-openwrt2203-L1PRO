@@ -12,6 +12,7 @@ function index()
 	entry({"admin", "sys", "sysmonitor","settings"}, cbi("sysmonitor/setup"), _("General Settings"), 30).dependent = true
 	entry({"admin", "sys", "sysmonitor", "log"},cbi("sysmonitor/log"),_("Log"), 60).leaf = true
 
+	entry({"admin", "sys", "sysmonitor", "minidlna_status"}, call("action_minidlna_status")).leaf = true
 	entry({"admin", "sys", "sysmonitor", "ip_status"}, call("action_ip_status")).leaf = true
 	entry({"admin", "sys", "sysmonitor", "refresh"}, call("refresh")).leaf = true
 	entry({"admin", "sys", "sysmonitor", "get_log"}, call("get_log")).leaf = true
@@ -34,6 +35,13 @@ function action_ip_status()
 	luci.http.prepare_content("application/json")
 	luci.http.write_json({
 		ip_state = ip.."<font color=9699cc>["..luci.sys.exec("/usr/share/sysmonitor/sysapp.sh getip6").."]</font>".." gateway:"..luci.sys.exec("/usr/share/sysmonitor/sysapp.sh getgateway")..'</font><button class=button1><a href="http://'..ip..':7681" target="_blank" title=" Open terminal">Open terminal</a></button>'
+	})
+end
+
+function action_minidlna_status()
+	luci.http.prepare_content("application/json")
+	luci.http.write_json({
+		minidlna_state = luci.sys.exec("/usr/share/sysmonitor/sysapp.sh minidlna_status")
 	})
 end
 

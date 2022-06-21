@@ -97,10 +97,11 @@ EOF
 	sed -i  "s|sqmshcn|$ipv6|" /etc/lighttpd/lighttpd.conf
 	/etc/init.d/lighttpd restart &
 	echolog "Update ip6: "$ipv6
+	[ $(uci_get_by_name $NAME sysmonitor samba 0) == 1 ] && /etc/init.d/samba4 restart &
 }
 
 minidlna_chk() {
-	str=$(uci_get_by_name $NAME sysmonitor minidlna 0)','
+	str=$(uci_get_by_name $NAME sysmonitor minidlna_dir 0)','
 	str=$(echo $str|sed 's/,,/,/g')
 	num=$(echo $str|awk -F"," '{print NF-1}')
 	a=1
@@ -134,28 +135,42 @@ check_dir() {
 }
 
 samba() {
+	[ -f /tmp/music ] && exit
+	touch /tmp/music
+	[ ! -d /var/ftp ] && {
+		mkdir /var/ftp
+		mkdir /var/ftp/upload
+		touch /var/ftp/welcome	
+	}
+
 	syspath='/mnt'
 	unftp
-if [ $(uci_get_by_name $NAME sysmonitor nfs 0) == 0 ]; then
-cat > /etc/config/nfs <<EOF
-config share
-	option clients '*'
-	option options 'ro,sync,root_squash,all_squash,insecure,no_subtree_check'
-	option enabled '1'
-	option path '/var/nfs'
-
-EOF
-else
 	echo "" >/etc/config/nfs
-fi
 	sed -i '/sambashare/,$d' /etc/config/samba4
-
+	if [ $(uci_get_by_name $NAME sysmonitor samba 0) == 0 ]; then
+		echolog "Samba stop....."
+		/etc/init.d/samba stop &
+	fi
+	if [ $(uci_get_by_name $NAME sysmonitor nfs 0) == 0 ]; then
+		echolog "NFS stop......"
+		/etc/init.d/nfsd stop
+		/etc/init.d/nfs stop &
+	else
+		/etc/init.d/nfsd start
+	fi
+	if [ $(uci_get_by_name $NAME sysmonitor ftp 0) == 0 ]; then
+		echolog "FTP stop......"
+		/etc/init.d/vsftpd stop &
+	fi
+	if [ $(uci_get_by_name $NAME sysmonitor minidlna 0) == 0 ]; then
+		echolog "Minidlna stop......"
+		/etc/init.d/minidlna stop &
+	fi
 	syssd=$(ls -F $syspath|grep '/$'| grep 'sd[a-z][1-9]')
 	[ "$syssd" == "" ] && {
-		status=$(cat /var/log/sysmonitor.log|sed '/^[  ]*$/d'|sed -n '$p'|grep "No usb devices finded! please insert")
-		[ ! -n "$status"  ] &&  echolog "No usb devices finded! please insert ..."
-		/etc/init.d/nfs restart
-		/etc/init.d/samba4 restart
+		status=$(cat /var/log/sysmonitor.log|sed '/^[  ]*$/d'|sed -n '$p'|grep "No Shares finded! please mount samba/cifs shares ...")
+		[ ! -n "$status"  ] &&  echolog "No Shares finded! please mount samba/cifs shares ..."
+		rm /tmp/music
 		exit
 	}
 sed -i '/media_dir/d' /etc/config/minidlna
@@ -210,9 +225,12 @@ config share
 EOF
 	echolog "NFS path: ["$syspath/$m$n"]"
 	}
-	status=$(minidlna_chk $n)
-	[ -n "$status" ] && {
-		uci add_list minidlna.config.media_dir="$syspath/$m$n"
+	[ $(uci_get_by_name $NAME sysmonitor minidlna 0) == 1 ] && {
+		status=$(minidlna_chk $n)
+		[ -n "$status" ] && {
+			uci add_list minidlna.config.media_dir="$syspath/$m$n"
+			echolog "minidlna path: ["$syspath/$m$n"]"
+		}
 	}
 fi
 done
@@ -223,25 +241,28 @@ done
 	fi
 done
 	uci commit minidlna
-	if [ $(uci_get_by_name $NAME sysmonitor webdav 0) == 0 ]; then
-		syspath="/var/webdav"
-	else
-		syspath="/mnt"
-	fi
-	sed -i "s|server.document-root.*$|server.document-root        = \"$syspath\"|" /etc/lighttpd/lighttpd.conf
-	echolog "webdav path: "$syspath
-	/etc/init.d/lighttpd restart &
-	/etc/init.d/samba4 restart &
-	/etc/init.d/vsftpd restart &
-	/etc/init.d/nfs restart &
-	/etc/init.d/minidlna restart
+	[ $(uci_get_by_name $NAME sysmonitor samba 0) == 1 ] && /etc/init.d/samba start &
+	[ $(uci_get_by_name $NAME sysmonitor nfs 0) == 1 ] && /etc/init.d/nfs start &
+	[ $(uci_get_by_name $NAME sysmonitor ftp 0) == 1 ] && /etc/init.d/vsftpd start &
+	[ $(uci_get_by_name $NAME sysmonitor minidlna 0) == 1 ] && /etc/init.d/minidlna start &
+	rm /tmp/music
 }
 
+minidlna_status() {
+status=$(/usr/bin/wget -qO- 'http://127.0.0.1:8200')
+status=$(echo ${status#*<tr><td>})
+status=$(echo ${status%<h3>*})
+status=$(echo $status|sed 's/<\/td><td>/(/g'|sed 's/<\/td><\/tr><tr>/)/g'|sed 's/<\/td><\/tr><\/table>/)/g'|sed 's/ /-/g'|sed 's/<td>/ /g')
+echo $status
+}
 
 arg1=$1
 shift
 case $arg1 in
 
+minidlna_status)
+	minidlna_status
+	;;
 lighttpd)
 	lighttpd
 	;;

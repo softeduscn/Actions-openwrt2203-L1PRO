@@ -279,6 +279,7 @@ cat > /mnt/.index.htm <<EOF
 </HTML>
 EOF
 
+[ -f /etc/init.d/samba4 ] && {
 file='/etc/samba/smb.conf.template'
 sed -i  's|#dns proxy = No|dns proxy = Yes|' $file
 sed -i  's|#local master = no|local master = Yes|' $file
@@ -291,33 +292,29 @@ cat >> $file << EOF
 	wins proxy =  yes
 	remote announce
 	remote browse sync
-	max protocol = SMB3
+	max protocol = SMB2
 	min protocol = NT1
 EOF
+}
 
-cat >> /etc/config/ttyd << EOF
+[ -f /etc/init.d/ttyd ] && {
+cat > /etc/config/ttyd << EOF
 config ttyd
 	option command '/bin/login'
 	option debug '7'
 	option ipv6 '1'
 EOF
+}
 
 mkdir /home
 mkdir /home/ftp
 chmod 755 /home
 chmod 755 /home/ftp
 
-mkdir /var/nfs
-chmod /755 /var/nfs
-mkdir /var/webdav
-chmod /755 /var/webdav
-mkdir /var/ftp
-chmod /755 /var/ftp
-mkdir /var/ftp/upload
-chmod /777 /var/ftp/upload
-touch /var/ftp/welcome
+/etc/init.d/samba4 disable
+/etc/init.d/vsftpd disable
+/etc/init.d/nfsd disable
+/etc/init.d/nfs disable
 
 sed -i 's/root:::0:99999:7:::/root:$1$zi2Q3mx.$FKnJLxOCjUxEX22lf3sXx0:19049:0:99999:7:::/g' /etc/shadow
-
-
 exit 0
