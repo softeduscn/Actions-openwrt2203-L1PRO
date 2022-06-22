@@ -79,25 +79,29 @@ unftp() {
 
 lighttpd() {
 	ip=$(ip -o -4 addr list br-lan | cut -d ' ' -f7|cut -d'/' -f1)
+	echo $ip > /www/ip.html
 cat > /mnt/.index.htm <<EOF
 <HTML>
       <HEAD>
       <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=gb2312" />
-      <META HTTP-EQUIV="refresh" CONTENT="0;url=http://$ip:8080/" />
+      <META HTTP-EQUIV="refresh" CONTENT="0;url=http://music111.ddnsfree.com:8080/" />
       </HEAD>
 </HTML>
 EOF
-	cp /mnt/.index.htm /var/webdav
-
-	echo $ip > /www/ip.html
 	ipv6=$(ip -o -6 addr list br-lan | cut -d ' ' -f7 | cut -d'/' -f1 |head -n1)
-	echo $ipv6 > /www/ip6.html
-	sed -i '/\$SERVER\["socket"]/d' /etc/lighttpd/lighttpd.conf
-	sed -i '/server.network-backend/a\$SERVER["socket"] == "[sqmshcn]:80" {}' /etc/lighttpd/lighttpd.conf
-	sed -i  "s|sqmshcn|$ipv6|" /etc/lighttpd/lighttpd.conf
-	/etc/init.d/lighttpd restart &
-	echolog "Update ip6: "$ipv6
-	[ $(uci_get_by_name $NAME sysmonitor samba 0) == 1 ] && /etc/init.d/samba4 restart &
+	[ -n "$ipv6" ] && {
+		echo $ipv6 > /www/ip6.html
+		dnsname="music111.ddnsfree.com"
+		sed -i '/\$SERVER\["socket"]/d' /etc/lighttpd/lighttpd.conf
+		sed -i '/server.network-backend/a\$SERVER["socket"] == "[sqmshcn]:80" {}' /etc/lighttpd/lighttpd.conf
+		sed -i  "s|sqmshcn|$ipv6|" /etc/lighttpd/lighttpd.conf
+		/etc/init.d/lighttpd restart &
+		echolog "Update ip6: "$ipv6
+		sed -i "/$dnsname/d" /etc/hosts
+		echo $ipv6' '$dnsname >> /etc/hosts
+		/etc/init.d/dnsmasq restart &
+		[ $(uci_get_by_name $NAME sysmonitor samba 0) == 1 ] && /etc/init.d/samba4 restart &
+	}
 }
 
 minidlna_chk() {
