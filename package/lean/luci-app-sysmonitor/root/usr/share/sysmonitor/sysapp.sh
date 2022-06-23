@@ -79,29 +79,61 @@ unftp() {
 
 lighttpd() {
 	ip=$(ip -o -4 addr list br-lan | cut -d ' ' -f7|cut -d'/' -f1)
-	echo $ip > /www/ip.html
-cat > /mnt/.index.htm <<EOF
-<HTML>
-      <HEAD>
-      <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=gb2312" />
-      <META HTTP-EQUIV="refresh" CONTENT="0;url=http://music111.ddnsfree.com:8080/" />
-      </HEAD>
-</HTML>
-EOF
-	ipv6=$(ip -o -6 addr list br-lan | cut -d ' ' -f7 | cut -d'/' -f1 |head -n1)
-	[ -n "$ipv6" ] && {
-		echo $ipv6 > /www/ip6.html
+	ip6=$(ip -o -6 addr list br-lan | cut -d ' ' -f7 | cut -d'/' -f1 |head -n1)
+	if [ -n "$ip6" ]; then
+		echo $ip6 > /www/ip6.html
 		dnsname="music111.ddnsfree.com"
 		sed -i '/\$SERVER\["socket"]/d' /etc/lighttpd/lighttpd.conf
 		sed -i '/server.network-backend/a\$SERVER["socket"] == "[sqmshcn]:80" {}' /etc/lighttpd/lighttpd.conf
-		sed -i  "s|sqmshcn|$ipv6|" /etc/lighttpd/lighttpd.conf
+		sed -i  "s|sqmshcn|$ip6|" /etc/lighttpd/lighttpd.conf
 		/etc/init.d/lighttpd restart &
-		echolog "Update ip6: "$ipv6
+		echolog "Update ip6: "$ip6
 		sed -i "/$dnsname/d" /etc/hosts
-		echo $ipv6' '$dnsname >> /etc/hosts
+		echo $ip6' '$dnsname >> /etc/hosts
 		/etc/init.d/dnsmasq restart &
 		[ $(uci_get_by_name $NAME sysmonitor samba 0) == 1 ] && /etc/init.d/samba4 restart &
-	}
+	else
+		ip6=$ip
+		echo "" > /www/ip6.html
+	fi
+	echo $ip > /www/ip.html
+cat > /mnt/.index.htm <<EOF
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table, td {
+ 	border: 1px solid black;
+	text-align :center;
+}
+</style>
+</head>
+<script>
+		var time = 9 ;
+		function showTime (){	
+			time--;
+			if(time<=0){
+				//clearInterval(id);
+				location.href = "http://[$ip6]:8080";
+			}
+			var sp = document.getElementById("time");
+			sp.innerHTML = "after " +time+ " select outside(ip6) network";
+		}
+		var id = setInterval(showTime,1000);	
+</script>
+
+<body>
+<h2 align="center">Selecr network to manager</h2>
+<h2 align="center" id = "time">after 9 select outside(ip6) network</h2>
+<table style="width:50%" align="center">
+  <tr>
+    <td><a href="http://$ip:8080/">Inside(ip4) network</a></td>
+    <td><a href="http://[$ip6]:8080/">Outside(ip6) network</a></td>
+  </tr>
+</table>
+</body>
+</html>
+EOF
 }
 
 minidlna_chk() {
@@ -286,5 +318,3 @@ check_dir)
 	check_dir $1 $2
 	;;
 esac
-
-

@@ -244,7 +244,7 @@ server.modules += ( "mod_webdav" )
 
 webdav.activate = "enable"
 #webdav.is-readonly = "enable"
-webdav.sqlite-db-name = "/tmp/lighttpd-webdav.db"
+#webdav.sqlite-db-name = "/tmp/lighttpd-webdav.db"
 EOF
 
 file='/etc/lighttpd/lighttpd.conf'
@@ -256,8 +256,16 @@ sed -i  's|".php", ".pl", ".fcgi"|".php", ".pl", ".fcgi", ".lua"|' $file
 sed -i s/':80'/':8080'/ /etc/config/uhttpd
 }
 
+[ -f /etc/php.ini ] && {
+file='/etc/php.ini'
+sed -i '/doc_root/a\sqmshcn' $file
+sed -i '/doc_root/d' $file
+sed -i  's|sqmshcn|doc_root = "/mnt"|' $file
+}
+
 [ -f /etc/lighttpd/conf.d/30-cgi.conf ] && {
 sed -i '/".cgi" => "\/usr\/bin\/perl"/i\                               ".lua" => "\/usr\/bin\/lua",' /etc/lighttpd/conf.d/30-cgi.conf
+sed -i '/".cgi" => "\/usr\/bin\/perl"/i\                               ".php" => "\/usr\/bin\/php-cgi",' /etc/lighttpd/conf.d/30-cgi.conf
 cat >> /etc/lighttpd/conf.d/30-cgi.conf <<EOF
 cgi.assign += ( "/cgi-bin/luci" => "",
                 "/cgi-bin/cgi-backup" => "",
