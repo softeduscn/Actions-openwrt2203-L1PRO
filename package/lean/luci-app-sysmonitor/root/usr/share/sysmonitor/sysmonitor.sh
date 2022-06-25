@@ -63,7 +63,11 @@ while [ "1" == "1" ]; do #死循环
 	ipv6=$(ip -o -6 addr list br-lan | cut -d ' ' -f7 | cut -d'/' -f1 |head -n1)
 	[ ! $ipv6 == $ipold ] && {
 		ipold=$ipv6
-		/usr/share/sysmonitor/sysapp.sh lighttpd
+		gateway=$(check_ip $(route |grep default|sed 's/default[[:space:]]*//'|sed 's/[[:space:]].*$//'))
+		status=$(ping_url $gateway)
+		if [ "$status" != 0 ]; then
+			/usr/share/sysmonitor/sysapp.sh lighttpd
+		fi
 	}
 	gatewayip=$(uci_get_by_name $NAME sysmonitor gateway 0)
 	vpnip=$(uci_get_by_name $NAME sysmonitor vpnip 0)

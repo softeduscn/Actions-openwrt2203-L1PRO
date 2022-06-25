@@ -97,42 +97,33 @@ lighttpd() {
 		echo "" > /www/ip6.html
 	fi
 	echo $ip > /www/ip.html
-cat > /mnt/.index.htm <<EOF
-<!DOCTYPE html>
-<html>
-<head>
-<style>
-table, td {
- 	border: 1px solid black;
-	text-align :center;
+cat > /mnt/.index.php <<EOF
+<?php  
+if  (getenv("HTTP_X_FORWARDED_FOR"))
+{
+  \$ip = getenv("HTTP_X_FORWARDED_FOR");
 }
-</style>
-</head>
-<script>
-		var time = 9 ;
-		function showTime (){	
-			time--;
-			if(time<=0){
-				//clearInterval(id);
-				location.href = "http://[$ip6]:8080";
-			}
-			var sp = document.getElementById("time");
-			sp.innerHTML = "after " +time+ " select outside(ip6) network";
-		}
-		var id = setInterval(showTime,1000);	
-</script>
-
-<body>
-<h2 align="center">Selecr network to manager</h2>
-<h2 align="center" id = "time">after 9 select outside(ip6) network</h2>
-<table style="width:50%" align="center">
-  <tr>
-    <td><a href="http://$ip:8080/">Inside(ip4) network</a></td>
-    <td><a href="http://[$ip6]:8080/">Outside(ip6) network</a></td>
-  </tr>
-</table>
-</body>
-</html>
+elseif (getenv("HTTP_CLIENT_IP"))
+{
+  \$ip = getenv("HTTP_CLIENT_IP");
+}
+elseif (getenv("REMOTE_ADDR"))
+{
+  \$ip = getenv("REMOTE_ADDR");
+}
+else
+{
+  \$ip = "Unknown";
+}
+if(strpos(\$ip,'192.168.1') !== false)
+{
+header("location: http://$ip:8080/");
+}
+else
+{
+header("location: http://[$ip6]:8080/");
+}
+?>
 EOF
 }
 

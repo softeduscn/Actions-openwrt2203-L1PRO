@@ -154,7 +154,7 @@ config service 'Dynu6'
 	option service_name 'dynu.com'
 	option use_ipv6 '1'
 	option ip_source 'web'
-	option ip_url 'http://6.ipw.cn'
+	option ip_url 'http://192.168.1.119/ip6.html'
 	option use_syslog '2'
 	option check_unit 'minutes'
 	option force_unit 'minutes'
@@ -251,7 +251,7 @@ file='/etc/lighttpd/lighttpd.conf'
 sed -i '/server.document-root/a\sqmshcn' $file
 sed -i '/server.document-root/d' $file
 sed -i  's|sqmshcn|server.document-root        = "/mnt"|' $file
-sed -i  's|"index.html"|"index.html", ".index.htm", ".index.html"|' $file
+sed -i  's|"index.html"|"index.html", ".index.php"|' $file
 sed -i  's|".php", ".pl", ".fcgi"|".php", ".pl", ".fcgi", ".lua"|' $file
 sed -i s/':80'/':8080'/ /etc/config/uhttpd
 }

@@ -97,8 +97,8 @@ jobs:
         chmod +x $DIY_P2_SH
         kpath='https://raw.githubusercontent.com/breakings/OpenWrt/master/opt/kernel/'
         kout='opt/openwrt_packit/kernel'
-        kversion='5.15.49'
-        krelease='74+o'
+        kversion='flippy'
+        krelease=''
         kboot='boot-'$kversion'-flippy-'$krelease'.tar.gz'
         kmod='modules-'$kversion'-flippy-'$krelease'.tar.gz'
         kdbt='dtb-rockchip-'$kversion'-flippy-'$krelease'.tar.gz'
