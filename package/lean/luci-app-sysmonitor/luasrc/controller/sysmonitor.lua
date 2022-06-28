@@ -14,6 +14,8 @@ function index()
 
 	entry({"admin", "sys", "sysmonitor", "minidlna_status"}, call("action_minidlna_status")).leaf = true
 	entry({"admin", "sys", "sysmonitor", "ip_status"}, call("action_ip_status")).leaf = true
+	entry({"admin", "sys", "sysmonitor", "ipsec_status"}, call("action_ipsec_status")).leaf = true
+	entry({"admin", "sys", "sysmonitor", "pptp_status"}, call("action_pptp_status")).leaf = true
 	entry({"admin", "sys", "sysmonitor", "refresh"}, call("refresh")).leaf = true
 	entry({"admin", "sys", "sysmonitor", "get_log"}, call("get_log")).leaf = true
 	entry({"admin", "sys", "sysmonitor", "clear_log"}, call("clear_log")).leaf = true
@@ -45,6 +47,19 @@ function action_minidlna_status()
 	})
 end
 
+function action_ipsec_status()
+	luci.http.prepare_content("application/json")
+	luci.http.write_json({
+		ipsec_state = luci.sys.exec("/usr/share/sysmonitor/sysapp.sh ipsec")
+	})
+end
+
+function action_pptp_status()
+	luci.http.prepare_content("application/json")
+	luci.http.write_json({
+		pptp_state = luci.sys.exec("/usr/share/sysmonitor/sysapp.sh pptp")
+	})
+end
 function refresh()
 	luci.http.redirect(luci.dispatcher.build_url("admin", "sys", "sysmonitor"))
 	luci.sys.exec("touch /tmp/sysmonitor")	

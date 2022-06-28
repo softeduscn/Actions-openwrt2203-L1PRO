@@ -55,6 +55,29 @@ ping_url() {
 }
 
 
+ipsec_users() {
+	if [ -f "/usr/sbin/ipsec" ]; then
+		users=$(/usr/sbin/ipsec status|grep xauth|grep ESTABLISHED|wc -l)
+		usersl2tp=$(top -bn1|grep options.xl2tpd|grep -v grep|wc -l)
+		let "users=users+usersl2tp"
+		[ "$users" == 0 ] && users='None'
+	else
+		users='None'
+	fi
+	echo $users
+}
+
+pptp_users() {
+	if [ -f "/usr/sbin/pppd" ]; then
+		users=$(top -bn1|grep options.pptpd|grep -v grep|wc -l)
+#		let users=users-1
+		[ "$users" == 0 ] && users='None'
+	else
+		users='None'
+	fi
+	echo $users
+}
+
 getip() {
 	echo $(ip -o -4 addr list br-lan | cut -d ' ' -f7 | cut -d'/' -f1)
 
@@ -304,6 +327,12 @@ getip6)
 	;;
 getgateway)
 	getgateway
+	;;
+ipsec)
+	ipsec_users
+	;;
+pptp)
+	pptp_users
 	;;
 check_dir)
 	check_dir $1 $2

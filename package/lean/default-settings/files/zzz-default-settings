@@ -29,6 +29,37 @@ config interface 'lan6'
 EOF
 fi
 
+#cat /etc/config/network | grep 192.168.9.8 > /dev/null
+#if [ $? -ne 0 ];then
+#cat >> /etc/config/network <<EOF
+#config interface 'wghome'
+#	option proto 'wireguard'
+#	option private_key '8JZLMZ/szMrkBXC8KETYcH1MIS3AgzdfOc+DRNAlR1s='
+##	list addresses '192.168.8.8/24'
+#	list addresses '192.168.7.8/24'
+#	list addresses '192.168.6.8/24'
+#config wireguard_wghome
+#	option description 'ALiCloud'
+##	option endpoint_port '51820'
+#	list allowed_ips '192.168.9.0/24'
+#	option route_allowed_ips '1'
+#	option endpoint_host '47.100.183.141'
+#	option public_key 'GWLcAE1Of7H1iolrSRAK1FYGB5dhwbEMTZvEJxoZYGA='
+#config wireguard_wghome
+#	option public_key 'RuCdaOHKPDf2c2kihx2dzBhEDKZnbnhP1N4aUBkzw3A='
+#	option route_allowed_ips '1'
+#	list allowed_ips '192.168.8.0/24'
+#config wireguard_wghome
+#	option public_key 'HkRSRzDMks74AmFQlnByouVNR6E/o5I+j033QqF1UyI='
+#	option route_allowed_ips '1'
+#	list allowed_ips '192.168.7.0/24'
+#config wireguard_wghome
+#	option public_key 'ql9g9ngGQMq9cyBaun5QjnyROyh7Cu4zJ9eZwFM6UGw='
+#	option route_allowed_ips '1'
+#	list allowed_ips '192.168.6.0/24'
+#EOF
+#fi
+
 uci del_list dhcp.lan.list ra_flags='none'
 uci add_list dhcp.lan.list ra_flags='none'
 uci set dhcp.lan.ra=''
@@ -49,10 +80,30 @@ fi
 
 uci del_list firewall.@zone[0].network='lan6'
 uci add_list firewall.@zone[0].network='lan6'
+#uci del_list firewall.@zone[0].network='wghome'
+#uci add_list firewall.@zone[0].network='wghome'
+uci set firewall.@zone[0].masq='1'
+uci set firewall.@zone[0].mtu_fix='1'
 uci set firewall.@defaults[0].flow_offloading='1'
 uci set firewall.@defaults[0].flow_offloading_hw='1'
 uci set firewall.@zone[1].input='ACCEPT'
 uci commit firewall
+
+#cat /etc/config/firewall | grep wghome > /dev/null
+#if [ $? -ne 0 ];then
+#cat >> /etc/config/firewall <<EOF
+#config zone
+#	option name 'wghome'
+#	option input 'ACCEPT'
+#	option output 'ACCEPT'
+#	option forward 'REJECT'
+#	list network 'wghome'
+#
+#config forwarding
+#	option src 'wghome'
+#	option dest 'lan''
+#EOF
+#fi
 
 sed -i '/media_dir/d' /etc/config/minidlna
 uci set minidlna.config.enabled='1'

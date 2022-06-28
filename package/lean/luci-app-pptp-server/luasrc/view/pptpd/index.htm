@@ -1,0 +1,26 @@
+<% include("cbi/map") %>
+<script type="text/javascript">//<![CDATA[
+	XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "vpn", "pptpd", "status")%>', null,
+		function(x, result)
+		{
+			var status = document.getElementsByClassName('pptpd_status')[0];
+			status.setAttribute("style","font-weight:bold;");
+			status.setAttribute("color",result.status ? "green":"red");
+			status.innerHTML = result.status?'<%=translate("RUNNING")%>':'<%=translate("NOT RUNNING")%>';
+		}
+	)
+	XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "vpn", "pptpd", "statusu")%>', null,
+		function(x, result)
+		{
+			var statusu = document.getElementsByClassName('pptpd_statusu')[0];
+			statusu.setAttribute("style","font-weight:bold;");
+			statusu.setAttribute("color","green");
+			if ( result.status == 0 ) {
+				result.status = '--'
+			}
+			statusu.innerHTML = result.status;
+		}
+	)
+
+//]]>
+</script>

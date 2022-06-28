@@ -1,0 +1,19 @@
+{
+	"luci-app-ipsec-vpnd": {
+		"description": "Grant UCI access for luci-app-ipsec-vpnd",
+		"read": {
+			"file": {
+				"/etc/config/ipsec": [ "read" ],
+				"/etc/init.d/ipsec": [ "exec" ]
+			},
+			"uci": [ "ipsec" ]
+		},
+		"write": {
+			"file": {
+				"/etc/config/ipsec": [ "write" ]
+			},
+
+			"uci": [ "ipsec" ]
+		}
+	}
+}
