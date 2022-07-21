@@ -12,6 +12,14 @@ s.anonymous = true
 o=s:option(Flag,"enable", translate("Enable"))
 o.rmempty=false
 
+o=s:option(Flag,"bbr", translate("BBR Enable"))
+o.rmempty=false
+
+if nixio.fs.access("/etc/init.d/ddns") then
+o=s:option(Flag,"ddns", translate("DDNS Enable"))
+o.rmempty=false
+end
+
 o=s:option(Flag,"ftp", translate("Enable ftp"))
 o.rmempty=false
 

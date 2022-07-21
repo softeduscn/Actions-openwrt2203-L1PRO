@@ -18,11 +18,27 @@ stop()
 start()
 {
 	if [ -f "/etc/init.d/ddns" ]; then
-		[ $(ps -w|grep ddns|grep -v grep|wc -l) == 0 ] && /etc/init.d/ddns restart &
+		[ $(ps |grep ddns|grep -v grep|wc -l) == 0 ] && /etc/init.d/ddns restart &
+	fi
+	if [ -f "/etc/init.d/aria2" ]; then
+		[ $(ps |grep aria2c|grep -v grep|wc -l) == '0' ] && /etc/init.d/aria2 start
+	fi
+	if [ $(uci get sysmonitor.sysmonitor.bbr) == 1 ];  then
+		sysctl -w net.ipv4.tcp_congestion_control=bbr
+	else
+		sysctl -w net.ipv4.tcp_congestion_control=cubic
+	fi
+	if [ -f "/etc/init.d/ddns" ]; then
+		if [ $(uci get sysmonitor.sysmonitor.ddns) == 1 ];  then
+			/etc/init.d/ddns enable
+			[ $(ps |grep ddns|grep -v grep|wc -l) == 0 ] && /etc/init.d/ddns start
+		else
+			/etc/init.d/ddns disable
+			/etc/init.d/ddns stop
+		fi
 	fi
 	set sysmonitor.sysmonitor.enable=1
 	set commit sysmonitor
-	$APP_PATH/sysapp.sh minidlna
 	$APP_PATH/sysapp.sh lighttpd
 	$APP_PATH/sysapp.sh samba
 	$APP_PATH/sysmonitor.sh &

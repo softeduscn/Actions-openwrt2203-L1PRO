@@ -11,7 +11,7 @@ uci -q batch <<-EOF >/dev/null
 	rename firewall.@rule[-1]="kms"
 	set firewall.@rule[-1].name="kms"
 	set firewall.@rule[-1].target="ACCEPT"
-	set firewall.@rule[-1].src="wan"
+	set firewall.@rule[-1].src="lan"
 	set firewall.@rule[-1].proto="tcp"
 	set firewall.@rule[-1].dest_port="1688"
 	commit firewall

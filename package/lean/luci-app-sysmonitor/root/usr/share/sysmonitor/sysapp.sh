@@ -158,8 +158,15 @@ minidlna_chk() {
 	while [ $a -le $num ]
 	do
  	  	dir=$(echo $str|cut -d',' -f $a)
+		result=$(echo $dir|grep -)
+		if [[ "$result" != "" ]]; then
+			media=$(echo ${dir^}|cut -d'-' -f 1)'-'
+			dir=$(echo $dir|cut -d'-' -f 2)
+		else
+			media=''
+		fi
 		[ $dir == $1 ] && {
-			echo $1
+			echo $media$dir
 			exit
 		}
    		a=`expr $a + 1`
@@ -199,7 +206,7 @@ samba() {
 	sed -i '/sambashare/,$d' /etc/config/samba4
 	if [ $(uci_get_by_name $NAME sysmonitor samba 0) == 0 ]; then
 		echolog "Samba stop....."
-		/etc/init.d/samba stop &
+		/etc/init.d/samba4 stop &
 	fi
 	if [ $(uci_get_by_name $NAME sysmonitor nfs 0) == 0 ]; then
 		echolog "NFS stop......"
@@ -250,10 +257,11 @@ config sambashare
 	option dir_mask '0777'
 	option create_mask '0777'
 	option timemachine '1'
+	option force_root '1'
 	option inherit_owner 'yes'
 
 EOF
-	echolog "Samba4 name: ["$n"]        path:["$syspath/$m$n"]"
+	echolog "Samba name: ["$n"]        path:["$syspath/$m$n"]"
 	}
 
 	[ $(uci_get_by_name $NAME sysmonitor nfs 0) == 1 ] && {
@@ -278,8 +286,15 @@ EOF
 	[ $(uci_get_by_name $NAME sysmonitor minidlna 0) == 1 ] && {
 		status=$(minidlna_chk $n)
 		[ -n "$status" ] && {
-			uci add_list minidlna.config.media_dir="$syspath/$m$n"
-			echolog "minidlna path: ["$syspath/$m$n"]"
+			result=$(echo $status|grep -)
+			if [[ "$result" != "" ]]; then
+				media=$(echo $status|cut -d'-' -f 1)','
+				status=$(echo $status|cut -d'-' -f 2)
+			else
+				media=''
+			fi
+			uci add_list minidlna.config.media_dir="$media$syspath/$m$status"
+			echolog "minidlna path: ["$media$syspath/$m$status"]"
 		}
 	}
 fi
@@ -291,7 +306,7 @@ done
 	fi
 done
 	uci commit minidlna
-	[ $(uci_get_by_name $NAME sysmonitor samba 0) == 1 ] && /etc/init.d/samba start &
+	[ $(uci_get_by_name $NAME sysmonitor samba4 0) == 1 ] && /etc/init.d/samba4 start &
 	[ $(uci_get_by_name $NAME sysmonitor nfs 0) == 1 ] && /etc/init.d/nfs start &
 	[ $(uci_get_by_name $NAME sysmonitor ftp 0) == 1 ] && /etc/init.d/vsftpd start &
 	[ $(uci_get_by_name $NAME sysmonitor minidlna 0) == 1 ] && /etc/init.d/minidlna start &
@@ -337,4 +352,8 @@ pptp)
 check_dir)
 	check_dir $1 $2
 	;;
+minidlna_chk)
+	minidlna_chk $1
+	;;
 esac
+

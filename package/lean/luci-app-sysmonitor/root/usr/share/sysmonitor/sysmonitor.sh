@@ -58,6 +58,7 @@ check_ip() {
 	fi
 }
 
+
 ipold='888'
 while [ "1" == "1" ]; do #死循环
 	ipv6=$(ip -o -6 addr list br-lan | cut -d ' ' -f7 | cut -d'/' -f1 |head -n1)

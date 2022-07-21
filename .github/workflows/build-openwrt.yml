@@ -97,7 +97,7 @@ jobs:
         chmod +x $DIY_P2_SH
         kpath='https://raw.githubusercontent.com/breakings/OpenWrt/master/opt/kernel/'
         kout='opt/openwrt_packit/kernel'
-        kversion='5.15.50'
+        kversion='5.15.55'
         krelease='74+o'
         kboot='boot-'$kversion'-flippy-'$krelease'.tar.gz'
         kmod='modules-'$kversion'-flippy-'$krelease'.tar.gz'
@@ -105,8 +105,8 @@ jobs:
         mkdir $kout
         wget -c $kpath$kversion'/'$kboot -O $kout'/'$kboot
         wget -c $kpath$kversion'/'$kmod -O $kout'/'$kmod
-        wget -c $kpath$kversion'/'$kdbt -O $kout'/'$kdbt  
-
+        wget -c $kpath$kversion'/'$kdbt -O $kout'/'$kdbt
+        sed -i s/'default LIBCURL_WOLFSSL'/'default LIBCURL_OPENSSL'/ openwrt/feeds/packages/net/curl/Config.in
  
         cp -r package/lean openwrt/package
         cp -r package/upx3.95/* openwrt/tools
