@@ -97,8 +97,8 @@ jobs:
         chmod +x $DIY_P2_SH
         kpath='https://raw.githubusercontent.com/breakings/OpenWrt/master/opt/kernel/'
         kout='opt/openwrt_packit/kernel'
-        kversion='5.15.55'
-        krelease='74+o'
+        kversion='5.15.56'
+        krelease='75+o'
         kboot='boot-'$kversion'-flippy-'$krelease'.tar.gz'
         kmod='modules-'$kversion'-flippy-'$krelease'.tar.gz'
         kdbt='dtb-rockchip-'$kversion'-flippy-'$krelease'.tar.gz'
@@ -155,8 +155,11 @@ jobs:
             cd $x
             filename=$(ls | awk -F '.img' '{print $1}')
             sudo gzip *.img
+            sha256=$(sudo sha256sum *)
             echo "FIRMWARE_L1PRO=$PWD" >> $GITHUB_ENV
             cd ../
+            echo $sha256 > sha256sums
+            sudo cp sha256sums $x
             sudo cp *-rootfs.tar.gz $x
         done
 
@@ -178,6 +181,7 @@ jobs:
         cd openwrt/bin/targets/*/*
         mkdir output
         cp openwrt-armvirt-64-default-rootfs.tar.gz output
+        cp sha256sums output
         cd output
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "::set-output name=status::success"
