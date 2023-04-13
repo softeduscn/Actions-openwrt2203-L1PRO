@@ -1,0 +1,87 @@
+--- a/package/openwrt/custom.conf	2022-11-18 06:13:57.763006247 -0800
++++ b/package/openwrt/custom.conf	2023-01-19 08:41:31.887552406 -0800
+@@ -1,14 +1,69 @@
+-# Add custom settings here.
+-
+-# set log level
+-# log-level [level], level=fatal, error, warn, notice, info, debug
+-# log-level error
+-
+-# log-size k,m,g
+-# log-size 128k
+-
+-# log-file /var/log/smartdns.log
+-# log-num 2
+-
+-# List of hosts that supply bogus NX domain results 
+-# bogus-nxdomain [ip/subnet]
+\ No newline at end of file
++# Add custom settings here.
++
++# set log level
++# log-level [level], level=fatal, error, warn, notice, info, debug
++# log-level error
++
++# log-size k,m,g
++# log-size 128k
++
++# log-file /var/log/smartdns.log
++# log-num 2
++
++# List of hosts that supply bogus NX domain results 
++# bogus-nxdomain [ip/subnet]
++
++#conf-file \/etc\/smartdns\/anti-ad-for-smartdns.conf
++dnsmasq-lease-file /var/dhcp.leases
++cache-size 1024
++cache-persist yes
++max-reply-ip-num 1
++response-mode first-ping
++prefetch-domain yes
++tcp-idle-time 120
++rr-ttl-min 60
++rr-ttl-max 600
++rr-ttl-reply-max 60
++rr-ttl 600
++local-ttl 60
++
++server 119.29.29.29 -group china
++server 114.114.114.114 -group china
++server 223.5.5.5 -group china
++
++server-tcp 119.29.29.29 -group china
++server-tcp 114.114.114.114 -group china
++server-tcp 223.5.5.5 -group china
++
++server-https https://dns.pub/dns-query -group china
++server-https https://dns.alidns.com/dns-query -group china
++
++server 8.8.4.4 -group oversea -exclude-default-group
++server 8.8.8.8 -group oversea -exclude-default-group
++server 1.1.1.1 -group oversea -exclude-default-group
++server 1.0.0.1 -group oversea -exclude-default-group
++server 208.67.222.222 -group oversea -exclude-default-group
++server 208.67.220.220 -group oversea -exclude-default-group
++server 2001:4860:4860::8888 -group oversea -exclude-default-group
++server 2001:4860:4860::8844 -group oversea -exclude-default-group
++
++server-tcp 8.8.4.4 -group oversea -exclude-default-group
++server-tcp 8.8.8.8 -group oversea -exclude-default-group
++server-tcp 1.1.1.1 -group oversea -exclude-default-group
++server-tcp 1.0.0.1 -group oversea -exclude-default-group
++server-tcp 208.67.222.222 -group oversea -exclude-default-group
++server-tcp 208.67.220.220 -group oversea -exclude-default-group
++server-tcp 2001:4860:4860::8888 -group oversea -exclude-default-group
++server-tcp 2001:4860:4860::8844 -group oversea -exclude-default-group
++
++server-tls 8.8.4.4:853 -group oversea -exclude-default-group
++server-tls 8.8.8.8:853 -group oversea -exclude-default-group
++server-tls 1.1.1.1:853 -group oversea -exclude-default-group
++server-tls 1.0.0.1:853 -group oversea -exclude-default-group
++server-tls 208.67.222.222:853 -group oversea -exclude-default-group
++server-tls 208.67.220.220:853 -group oversea -exclude-default-group
++
++server-https https://dns.google/dns-query -group oversea -exclude-default-group
++server-https https://cloudflare-dns.com/dns-query -group oversea -exclude-default-group
++server-https https://doh.opendns.com/dns-query -group oversea -exclude-default-group
++server-https https://dns.quad9.net/dns-query -group oversea -exclude-default-group

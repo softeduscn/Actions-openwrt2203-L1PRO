@@ -1,0 +1,486 @@
+#!/bin/sh
+
+uci set fstab.@global[0].anon_mount='1'
+uci commit fstab
+
+uci set system.@system[0].hostname='NAS'
+uci set system.@system[0].timezone=CST-8
+uci set system.@system[0].zonename=Asia/Shanghai
+uci commit system
+uci set network.globals.ula_prefix=''
+#uci set network.@device[0].mtu='1472'
+#uci set network.@device[0].stp='0'
+uci set network.@device[0].acceptlocal='1'
+#uci set network.@device[0].multicast='0'
+uci set network.lan.ipaddr='192.168.1.220'
+uci set network.lan.netmask='255.255.255.0'
+uci set network.lan.gateway='192.168.1.1'
+uci del network.lan.dns
+uci add_list network.lan.dns='192.168.1.1'
+uci set network.lan.ip6assign=''
+uci commit network
+
+cat /etc/config/network | grep wan6 > /dev/null
+if [ $? -ne 0 ];then
+cat >>/etc/config/network <<EOF
+config interface 'wan6'
+	option proto 'dhcpv6'
+	option device 'br-lan'
+	option reqaddress 'try'
+	option reqprefix 'auto'
+
+config interface 'wan'
+	option proto 'static'
+	option ipaddr '192.168.1.228'
+	option netmask '255.255.255.0'
+	option gateway '192.168.1.1'
+	option device 'br-lan'
+	list dns '192.168.1.1'
+
+config device
+	option name 'wghome'
+	option acceptlocal '1'
+
+config device
+	option name 'eth0'
+	option acceptlocal '1'
+
+config interface 'wghome'
+	option proto 'wireguard'
+	option private_key '8JZLMZ/szMrkBXC8KETYcH1MIS3AgzdfOc+DRNAlR1s='
+	list addresses '192.168.9.228'
+	option listen_port '58888'
+
+config wireguard_wghome
+	option public_key 'RuCdaOHKPDf2c2kihx2dzBhEDKZnbnhP1N4aUBkzw3A='
+	option route_allowed_ips '1'
+	list allowed_ips '192.168.9.11'
+	option description 'Iphone8Plus'
+
+config wireguard_wghome
+	option public_key 'HkRSRzDMks74AmFQlnByouVNR6E/o5I+j033QqF1UyI='
+	option route_allowed_ips '1'
+	list allowed_ips '192.168.9.12'
+	option description 'Iphone7'
+
+config wireguard_wghome
+	option public_key 'ql9g9ngGQMq9cyBaun5QjnyROyh7Cu4zJ9eZwFM6UGw='
+	option route_allowed_ips '1'
+	list allowed_ips '192.168.9.13'
+	option description 'Iphone8'
+EOF
+fi
+
+uci del_list dhcp.lan.list ra_flags='none'
+uci add_list dhcp.lan.list ra_flags='none'
+uci set dhcp.lan.ra=''
+uci set dhcp.lan.dhcpv4=''
+uci set dhcp.lan.dhcpv6=''
+uci set dhcp.lan.ignore='1'
+uci commit dhcp
+
+cat /etc/config/dhcp | grep wan6 > /dev/null
+if [ $? -ne 0 ];then
+cat >> /etc/config/dhcp <<EOF
+config dhcp 'wan6'
+	option interface 'wan6'
+	option ignore '1'
+	list ra_flags 'none'
+
+config domain
+	option name 'NAS'
+	option ip '192.168.1.220'
+
+config domain
+	option name 'VPN'
+	option ip '192.168.1.110'
+EOF
+fi
+
+uci set firewall.@zone[0].network='lan'
+uci set firewall.@defaults[0].synflood_protect='0'
+uci set firewall.@defaults[0].flow_offloading='0'
+uci set firewall.@defaults[0].flow_offloading_hw='0'
+uci set firewall.@defaults[0].input='ACCEPT'
+uci set firewall.@defaults[0].output='ACCEPT'
+uci set firewall.@defaults[0].forward='REJECT'
+
+uci set firewall.@zone[0].input='ACCEPT'
+uci set firewall.@zone[0].output='ACCEPT'
+uci set firewall.@zone[0].forward='ACCEPT'
+uci set firewall.@zone[0].masq='0'
+uci set firewall.@zone[0].mtu_fix='0'
+uci set firewall.@zone[1].input='ACCEPT'
+uci set firewall.@zone[1].output='ACCEPT'
+uci set firewall.@zone[1].forward='REJECT'
+uci set firewall.@zone[1].masq='1'
+uci set firewall.@zone[1].mtu_fix='1'
+uci set firewall.@zone[1].network='wan'
+uci add_list firewall.@zone[1].network='wan6'
+uci commit firewall
+
+cat /etc/config/firewall | grep wghome > /dev/null
+if [ $? -ne 0 ];then
+cat >> /etc/config/firewall <<EOF
+config zone
+	option name 'wghome'
+	option input 'ACCEPT'
+	option output 'ACCEPT'
+	option forward 'ACCEPT'
+	list network 'wghome'
+
+config rule
+	option name 'Wireguard'
+	option src 'wan'
+	option src_port '58888'
+	option dest_port '58888'
+	option target 'ACCEPT'
+
+config forwarding
+	option src 'wghome'
+	option dest 'wan'
+
+config nat
+	option name 'Allow-119'
+	option src 'lan'
+	option target 'ACCEPT'
+	list proto 'all'
+	option src_ip '192.168.1.119'
+
+config nat
+	option name 'Allow-120'
+	option src 'lan'
+	option target 'ACCEPT'
+	list proto 'all'
+	option src_ip '192.168.1.120'
+EOF
+fi
+
+sed -i '/media_dir/d' /etc/config/minidlna
+uci set minidlna.config.enabled='1'
+uci set minidlna.config.friendly_name='NAS DLNA Server'
+uci add_list minidlna.config.media_dir="/mnt/sda1/music"
+uci commit minidlna
+
+[ -f /etc/init.d/ddns ] && {
+/etc/init.d/ddns enable
+cat > /etc/config/ddns <<EOF
+config ddns 'global'
+	option ddns_dateformat '%F %R'
+	option ddns_loglines '250'
+	option ddns_rundir '/var/run/ddns'
+	option ddns_logdir '/var/log/ddns'
+	option upd_privateip '1'
+
+config service 'ChangeipECS'
+	option service_name 'changeip.com'
+	option use_ipv6 '0'
+	option enabled '1'
+	option username 'sqmshcn@gmail.com'
+	option password 'sqmshcn110'
+	option use_syslog '2'
+	option check_unit 'minutes'
+	option force_unit 'minutes'
+	option retry_unit 'seconds'
+	option ip_source 'web'
+	option ip_url 'http://47.100.183.141/ip.php'
+	option lookup_host 'ecs.freeddns.com'
+	option domain 'ecs.freeddns.com'
+	option interface 'br-lan'
+	option bind_network 'lan'
+	option force_dnstcp '1'
+
+config service 'DynuVAIO'
+	option service_name 'dynu.com'
+	option use_ipv6 '0'
+	option lookup_host 'vaiocn.ddnsfree.com'
+	option domain 'vaiocn.ddnsfree.com'
+	option username 'sqmshcn'
+	option password 'dynuddns'
+	option use_syslog '2'
+	option check_unit 'minutes'
+	option force_unit 'minutes'
+	option retry_unit 'seconds'
+	option ip_source 'web'
+	option ip_url 'http://members.3322.org/dyndns/getip'
+	option enabled '1'
+	option interface 'br-lan'
+	option bind_network 'lan'
+	option force_dnstcp '1'
+
+config service 'DynuHOME'
+	option service_name 'dynu.com'
+	option use_ipv6 '0'
+	option enabled '1'
+	option ip_source 'web'
+	option use_syslog '2'
+	option check_unit 'minutes'
+	option force_unit 'minutes'
+	option retry_unit 'seconds'
+	option username 'sqmshcn'
+	option password 'dynuddns'
+	option ip_url 'http://members.3322.org/dyndns/getip'
+	option lookup_host 'homecn.ddnsfree.com'
+	option domain 'homecn.ddnsfree.com'
+	option bind_network 'lan'
+	option interface 'br-lan'
+	option force_dnstcp '1'
+
+config service 'DynuNAS'
+	option service_name 'dynu.com'
+	option use_ipv6 '0'
+	option enabled '1'
+	option ip_source 'web'
+	option use_syslog '2'
+	option check_unit 'minutes'
+	option force_unit 'minutes'
+	option retry_unit 'seconds'
+	option username 'sqmshcn'
+	option password 'dynuddns'
+	option ip_url 'http://members.3322.org/dyndns/getip'
+	option lookup_host 'nascn.ddnsfree.com'
+	option domain 'nascn.ddnsfree.com'
+	option bind_network 'lan'
+	option interface 'br-lan'
+	option force_dnstcp '1'
+
+config service 'DynuSSR'
+	option service_name 'dynu.com'
+	option use_ipv6 '0'
+	option enabled '1'
+	option ip_source 'web'
+	option use_syslog '2'
+	option check_unit 'minutes'
+	option force_unit 'minutes'
+	option retry_unit 'seconds'
+	option username 'sqmshcn'
+	option password 'dynuddns'
+	option ip_url 'http://members.3322.org/dyndns/getip'
+	option lookup_host 'ssrcn.ddnsfree.com'
+	option domain 'ssrcn.ddnsfree.com'
+	option bind_network 'lan'
+	option interface 'br-lan'
+	option force_dnstcp '1'
+
+config service 'DynuVAIO6'
+	option service_name 'dynu.com'
+	option use_ipv6 '1'
+	option enabled '1'
+	option username 'sqmshcn'
+	option password 'dynuddns'
+	option use_syslog '2'
+	option check_unit 'minutes'
+	option force_unit 'minutes'
+	option retry_unit 'seconds'
+	option ip_source 'web'
+	option ip_url 'http://192.168.1.120/ip6.html'
+	option interface 'br-lan'
+	option bind_network 'lan'
+	option lookup_host 'vaiocn.ddnsfree.com'
+	option domain 'vaiocn.ddnsfree.com'
+	option force_dnstcp '1'
+
+config service 'DynuHOME6'
+	option service_name 'dynu.com'
+	option use_ipv6 '1'
+	option ip_source 'web'
+	option ip_url 'http://192.168.1.119/ip6.html'
+	option use_syslog '2'
+	option check_unit 'minutes'
+	option force_unit 'minutes'
+	option retry_unit 'seconds'
+	option username 'sqmshcn'
+	option password 'dynuddns'
+	option enabled '1'
+	option lookup_host 'homecn.ddnsfree.com'
+	option domain 'homecn.ddnsfree.com'
+	option interface 'br-lan'
+	option bind_network 'lan'
+	option force_dnstcp '1'
+
+config service 'DynuNAS6'
+	option service_name 'dynu.com'
+	option use_ipv6 '1'
+	option enabled '1'
+	option username 'sqmshcn'
+	option password 'dynuddns'
+	option use_syslog '2'
+	option check_unit 'minutes'
+	option force_unit 'minutes'
+	option retry_unit 'seconds'
+	option ip_source 'web'
+	option ip_url 'http://192.168.1.220:8080/ip6.html'
+	option interface 'br-lan'
+	option bind_network 'lan'
+	option lookup_host 'nascn.ddnsfree.com'
+	option domain 'nascn.ddnsfree.com'
+	option force_dnstcp '1'
+
+config service 'DynuSSR6'
+	option service_name 'dynu.com'
+	option use_ipv6 '1'
+	option enabled '1'
+	option username 'sqmshcn'
+	option password 'dynuddns'
+	option use_syslog '2'
+	option check_unit 'minutes'
+	option force_unit 'minutes'
+	option retry_unit 'seconds'
+	option ip_source 'web'
+	option ip_url 'http://192.168.1.110/ip6.html'
+	option interface 'br-lan'
+	option bind_network 'lan'
+	option lookup_host 'ssrcn.ddnsfree.com'
+	option domain 'ssrcn.ddnsfree.com'
+	option force_dnstcp '1'
+EOF
+}
+
+[ -f /etc/vsftpd.conf ] && {
+cat > /etc/vsftpd.conf <<EOF
+background=YES
+listen=NO
+listen_ipv6=YES
+anonymous_enable=YES
+local_enable=YES
+write_enable=YES
+local_umask=022
+file_open_mode=0755
+check_shell=NO
+chown_uploads=YES
+chown_username=ftp
+ftp_username=ftp
+anonymous_enable=YES
+no_anon_password=YES
+anon_upload_enable=YES
+anon_world_readable_only=YES
+anon_mkdir_write_enable=YES
+anon_other_write_enable=YES
+anon_umask=022
+anon_root=/var/ftp
+local_root=/mnt
+EOF
+}
+
+[ -f /etc/lighttpd/conf.d/30-webdav.conf ] && {
+cat > /etc/lighttpd/conf.d/30-webdav.conf <<EOF
+server.modules += ( "mod_webdav" )
+
+webdav.activate = "enable"
+#webdav.is-readonly = "enable"
+#webdav.sqlite-db-name = "/tmp/lighttpd-webdav.db"
+EOF
+
+file='/etc/lighttpd/lighttpd.conf'
+sed -i  's|server.document-root.*$|server.document-root        = "/mnt"|' $file
+sed -i  's|"index.html"|"index.html", ".index.php"|' $file
+sed -i  's|".php", ".pl", ".fcgi"|".php", ".pl", ".fcgi", ".lua"|' $file
+sed -i s/':80'/':8080'/ /etc/config/uhttpd
+}
+
+[ -f /etc/php.ini ] && {
+file='/etc/php.ini'
+sed -i  's|doc_root.*$|doc_root = "/mnt"|' $file
+}
+
+[ -f /etc/lighttpd/conf.d/30-cgi.conf ] && {
+sed -i '/".cgi" => "\/usr\/bin\/perl"/i\                               ".lua" => "\/usr\/bin\/lua",' /etc/lighttpd/conf.d/30-cgi.conf
+sed -i '/".cgi" => "\/usr\/bin\/perl"/i\                               ".php" => "\/usr\/bin\/php-cgi",' /etc/lighttpd/conf.d/30-cgi.conf
+cat >> /etc/lighttpd/conf.d/30-cgi.conf <<EOF
+cgi.assign += ( "/cgi-bin/luci" => "",
+                "/cgi-bin/cgi-backup" => "",
+                "/cgi-bin/cgi-download" => "",
+                "/cgi-bin/cgi-exec" => "",
+                "/cgi-bin/cgi-upload" => "" )
+				
+server.username := ""
+server.groupname := ""
+EOF
+}
+
+#cat > /mnt/.index.htm <<EOF
+#<HTML>
+#      <HEAD>
+#      <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=gb2312" />
+#      <META HTTP-EQUIV="refresh" CONTENT="0;url=http://192.168.1.220:8080/" />
+#      </HEAD>
+#</HTML>
+#EOF
+
+[ -f /etc/init.d/samba4 ] && {
+file='/etc/samba/smb.conf.template'
+#sed -i  's|#local master = no|local master = yes|' $file
+sed -i  's|#preferred master = yes|preferred master = yes|' $file
+sed -i  's|#smb ports = 445 139|smb ports = 445 139|' $file
+sed -i  's|#dns proxy = No|dns proxy = yes|' $file
+cat >> $file << EOF
+	domain master = yes
+	browseable = yes
+	wins support = yes
+	wins proxy =  yes
+	remote announce
+	remote browse sync
+	max protocol = SMB2
+	client ipc min protocol = NT1
+	client min protocol = NT1
+	server min protocol = NT1
+	min protocol = NT1
+EOF
+}
+
+[ -f /etc/init.d/ttyd ] && {
+cat > /etc/config/ttyd << EOF
+config ttyd
+	option command '/bin/login'
+	option debug '7'
+	option ipv6 '1'
+EOF
+}
+
+[ -f /etc/init.d/aria2 ] && {
+cat > /etc/config/aria2 <<EOF
+config aria2 'main'
+	option user 'aria2'
+	option dir '/mnt/sda1/aria2'
+	option config_dir '/var/etc/aria2'
+	option bt_enable_lpd 'true'
+	option enable_dht 'true'
+	option follow_torrent 'true'
+	option file_allocation 'none'
+	option save_session_interval '30'
+	option enabled '1'
+	option enable_logging '0'
+	option rpc_auth_method 'token'
+	option rpc_secret 'vtqz7iktpher5hakdqowfr6t47ic2s9y'
+	option rpc_secure 'false'
+	option enable_proxy '0'
+	option check_certificate 'true'
+	option enable_dht6 'false'
+	option enable_peer_exchange 'true'
+EOF
+sed -i 's/procd_add_jail/#&/' /etc/init.d/aria2
+}
+
+cat > /mnt/.getvpn.php <<EOF
+<?php
+echo shell_exec('/usr/share/sysmonitor/sysapp.sh getvpn');
+?>
+EOF
+
+mkdir /home
+mkdir /home/ftp
+chmod 755 /home
+chmod 755 /home/ftp
+
+/etc/init.d/samba4 disable
+/etc/init.d/vsftpd disable
+/etc/init.d/nfsd disable
+/etc/init.d/nfs disable
+
+#sed -i '/iptables -t nat/d' /etc/firewall.user
+#echo "iptables -t nat -I POSTROUTING -j MASQUERADE" >> /etc/firewall.user
+
+sed -i s/'procd_add_jail'/'#procd_add_jailk'/ package/lean/aria2/files/aria2.init
+sed -i 's/root.*$/root:$1$zi2Q3mx.$FKnJLxOCjUxEX22lf3sXx0:19049:0:99999:7:::/g' /etc/shadow
+
+exit 0

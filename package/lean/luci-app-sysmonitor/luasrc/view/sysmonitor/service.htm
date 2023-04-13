@@ -1,0 +1,29 @@
+<style>.button1 {-webkit-transition-duration: 0.4s;transition-duration: 0.4s;padding: 1px 16px;text-align: center;background-color: white;color: black;border: 2px solid #4CAF50;border-radius:5px;}.button1:hover {background-color: #4CAF50;color: white;}.button1 {font-size: 13px;}</style>
+<fieldset class="cbi-section">
+	<table width="100%" cellspacing="10" id="_xlnetacc_service_status_table">
+		<tr><td width="20%"  id="_service_title"></td><td title="" id="_service_state"></td></tr>
+	</table>
+	<br>
+	<table width="100%" cellspacing="10" id="_xlnetacc_service_button_table">
+		<tr><td></td><td title="" id="_service_button"></td></tr>
+	</table>
+</fieldset>
+<script type="text/javascript">//<![CDATA[
+	var service_state = document.getElementById('_service_state');
+	var service_button = document.getElementById('_service_button');
+	var service_title = document.getElementById('_service_title');
+	
+	XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "sys", "sysmonitor", "service_status")%>', null, function(x, status) {
+		if ( x && x.status == 200 ) {
+			service_state.innerHTML ='<em><b>'+status.service_state+'</b></em>';
+		}
+	});
+	XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "sys", "sysmonitor", "service_button")%>', null, function(x, status) {
+		if ( x && x.status == 200 ) {
+			service_button.innerHTML ='<em><b>'+status.service_button+'</b></em>';
+		}
+	});
+//]]></script>
+
+
+

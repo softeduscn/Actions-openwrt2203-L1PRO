@@ -1,0 +1,34 @@
+<script type="text/javascript">//<![CDATA[
+XHR.poll(3, '<%=url([[admin]], [[vpn]], [[ipsec-server]], [[status]])%>', null,
+	function(x, data) {
+		var tb = document.getElementById('_ipsec_status');
+		if (data && tb) {
+			if (data.running) {
+				var links = '<em><b><font color=green><%:RUNNING%></font></b></em>';
+				tb.innerHTML = links;
+			} else {
+				tb.innerHTML = '<em><b><font color=red><%:NOT RUNNING%></font></b></em>';
+			}
+		}
+	}
+);
+XHR.poll(3, '<%=url([[admin]], [[vpn]], [[ipsec-server]], [[users_status]])%>', null,
+	function(x, ipsec_status) {
+		var ipsec_state = document.getElementById('_ipsec_state');
+		if ( x && x.status == 200 ) {
+			ipsec_state.innerHTML ='<em><b><a href="/cgi-bin/luci/admin/vpn/ipsec-server/online"><font color=green>'+ipsec_status.ipsec_state+'</font></a></b></em>';
+		}
+	}
+);
+
+//]]>
+</script>
+<style>.mar-10 {margin-left: 50px; margin-right: 10px;}</style>
+<fieldset class="cbi-section">
+	<table width="100%" cellspacing="10" id="ipsec_status">
+		<tr><td width="20%"><%:Current Condition%></td><td id="_ipsec_status"><em><%:Collecting data...%></em></td></tr>
+	</table>
+	<table width="100%" cellspacing="10" id="ipsec_user">
+		<tr><td width="20%"><%:Online Users%></td><td title="Go to show IPSEC users..." id="_ipsec_state"><em><%:Collecting data...%></em></td></tr>
+	</table>
+</fieldset>

@@ -1,0 +1,21 @@
+#!/bin/sh
+
+uci -q batch <<-EOF >/dev/null
+	delete ucitrack.@alist[-1]
+	add ucitrack alist
+	set ucitrack.@alist[-1].init=alist
+	commit ucitrack
+
+	delete firewall.alist
+	set firewall.alist=rule
+	set firewall.alist.name="alist"
+	set firewall.alist.target="ACCEPT"
+	set firewall.alist.src="lan"
+	set firewall.alist.proto="tcp"
+	set firewall.alist.dest_port="5244"
+	set firewall.alist.enabled="1"
+	commit firewall
+EOF
+
+rm -rf /tmp/luci-*
+exit 0

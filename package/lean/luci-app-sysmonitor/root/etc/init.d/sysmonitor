@@ -1,0 +1,47 @@
+#!/bin/sh /etc/rc.common
+#
+# Copyright (C) 2017 openwrt-system-monitor
+#
+# This is free software, licensed under the GNU General Public License v3.
+# See /LICENSE for more information.
+#
+START=99
+STOP=15
+NAME=sysmonitor
+APP_PATH=/usr/share/$NAME
+
+stop()
+{
+	uci set sysmonitor.sysmonitor.enable=0
+	uci commit sysmonitor
+}
+start()
+{
+	path=$(ls /mnt|grep mmc|grep 4)
+	[ -f "/mnt/$path/sha256sums" ] && rm /mnt/$path/sha256sums
+	if [ -f "/etc/init.d/aria2" ]; then
+		[ $(ps |grep aria2c|grep -v grep|wc -l) == '0' ] && /etc/init.d/aria2 start
+	fi
+	if [ -f "/etc/init.d/ddns" ]; then
+		if [ $(uci get sysmonitor.sysmonitor.ddns) == 1 ];  then
+			/etc/init.d/ddns enable
+			if [ $(ps |grep ddns|grep -v grep|wc -l) == 0 ]; then
+				/etc/init.d/ddns start
+			else
+				/etc/init.d/ddns restart
+			fi
+		else
+			/etc/init.d/ddns disable
+			/etc/init.d/ddns stop
+		fi
+	fi
+	uci set sysmonitor.sysmonitor.enable=1
+	uci commit sysmonitor
+	$APP_PATH/sysapp.sh setdns
+	$APP_PATH/sysapp.sh set_smartdns
+	$APP_PATH/sysapp.sh lighttpd
+	$APP_PATH/sysapp.sh samba
+	$APP_PATH/sysmonitor.sh &
+}
+
+

@@ -1,0 +1,9 @@
+
+config alist
+	option port '5244'
+	option temp_dir '/tmp/alist'
+	option ssl '0'
+	option enabled '1'
+	option log '1'
+	option allow_wan '0'
+

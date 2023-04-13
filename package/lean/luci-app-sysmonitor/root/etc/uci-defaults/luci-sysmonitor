@@ -1,0 +1,14 @@
+#!/bin/sh
+uci -q batch <<-EOF >/dev/null
+delete ucitrack.@sysmonitor[-1]
+add ucitrack sysmonitor
+set ucitrack.@sysmonitor[-1].init=sysmonitor
+commit ucitrack
+EOF
+
+chmod 0755 /etc/init.d/sysmonitor /etc/init.d/ttyd_linux.aarch64 /usr/share/sysmonitor/*.sh
+mv /etc/init.d/ttyd.aarch64 /usr/bin/ttyd
+
+rm -rf /tmp/luci-modulecache /tmp/luci-indexcache
+
+exit 0

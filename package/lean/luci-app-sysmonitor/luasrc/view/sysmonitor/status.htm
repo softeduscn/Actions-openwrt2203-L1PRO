@@ -1,0 +1,50 @@
+<style>.button1 {-webkit-transition-duration: 0.4s;transition-duration: 0.4s;padding: 1px 3px;text-align: center;background-color: white;color: black;border: 2px solid #4CAF50;border-radius:1px;}.button1:hover {background-color: #4CAF50;color: white;}.button1 {font-size: 13px;}</style>
+<fieldset class="cbi-section">
+	<table width="100%" cellspacing="10" id="_xlnetacc_ip_status_table">
+		<tr><td width="20%" title="local ip address ..." id="_ip_title"></td><td title="" id="_ip_state"><em></em></td></tr>
+	</table>
+	<table width="100%" cellspacing="10" id="_xlnetacc_minidlna_status_table">
+		<tr><td width="20%" title="Minidlna Status..." id="_minidlna_title"><font color=green></font></td><td title="" id="_minidlna_state"><em></em></td></tr>
+	</table>
+	<table width="100%" cellspacing="10" id="_xlnetacc_wireguard_status_table">
+		<tr><td title="GO TO wireguard" width="20%" id="_wireguard_title"></td><td title="GO TO Wireguard user..." id="_wireguard_state"><em></em></td></tr>
+	</table>
+</fieldset>
+
+<script type="text/javascript">//<![CDATA[
+	var ip_state = document.getElementById('_ip_state');
+	var minidlna_state = document.getElementById('_minidlna_state');	
+	var wireguard_state = document.getElementById('_wireguard_state');
+
+	var ip_title = document.getElementById('_ip_title');
+	var minidlna_title = document.getElementById('_minidlna_title');
+	var wireguard_title = document.getElementById('_wireguard_title');
+
+	XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "sys", "sysmonitor", "ip_status")%>', null, function(x, status) {
+		if ( x && x.status == 200 ) {
+		var proto = "Set dhcp";
+		if ( status.ip_state.search(/hcp/) > 0 ) {
+			proto = "Set static"
+		}
+			ip_title.innerHTML ='<em><b><font color=6699cc>Local IP</font></b></em>';
+			ip_state.innerHTML ='<em><b><font color=6699cc>'+status.ip_state+'</font></b></em>';
+		}
+	});
+	XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "sys", "sysmonitor", "minidlna_status")%>', null, function(x, status) {
+		if ( x && x.status == 200 ) {
+			minidlna_title.innerHTML ='<em><b><font color=6699cc>minidlna</font></b></em>';
+			minidlna_state.innerHTML ='<em><b><font color=6699cc>'+status.minidlna_state+'</font></b></em>';
+		}
+	});
+	XHR.poll(5, '<%=luci.dispatcher.build_url("admin", "sys", "sysmonitor", "wireguard_status")%>', null, function(x, status) {
+		if ( x && x.status == 200 ) {
+			if ( status.wireguard_state.search(/one/) > 0 ) { 
+			wireguard_title.innerHTML ='<em><b></b></em>';
+			wireguard_state.innerHTML ='<em><b></b></em>';}
+			else {
+			wireguard_title.innerHTML ='<em><b><font color=green>Wireguard Users</font></b></em>';
+			wireguard_state.innerHTML ='<em><b><a href="/cgi-bin/luci/admin/sys/sysmonitor/wgusers"><font color=green>'+status.wireguard_state+'</font></a></b></em>';}
+		}
+	});
+//]]></script>
+
